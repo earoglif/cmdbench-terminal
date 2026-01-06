@@ -1,62 +1,17 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useCommandsStore } from '@/stores/commandsStore';
 import { useCommandGroupsStore } from '@/stores/commandGroupsStore';
-import { useAuthStore } from '@/stores/authStore';
 
 export const useCommands = () => {
   const { 
-    commands, 
-    isLoading: commandsLoading, 
-    error: commandsError,
-    loadFromBulkData,
-    isCommandSynced 
+    commands
   } = useCommandsStore();
   
   const { 
-    groups, 
-    isLoading: groupsLoading, 
-    error: groupsError,
-    loadFromBackend,
-    isGroupSynced
+    groups
   } = useCommandGroupsStore();
-  
-  const { isAuthenticated } = useAuthStore();
 
-  const loadData = async () => {
-    if (isAuthenticated) {
-      try {
-        await loadFromBackend((bulkCommands, groupCommandMap) => {
-          loadFromBulkData(bulkCommands, groupCommandMap);
-        });
-      } catch (error) {
-        console.error('Failed to load data from backend:', error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [isAuthenticated]);
-
-  // Мемоизируем данные для меню, чтобы они обновлялись при изменении stores
   const menuData = useMemo(() => {
-    if (!isAuthenticated) {
-      // Показываем только локальные команды
-      const localGroups = groups.filter(group => !isGroupSynced(group.id));
-      const localCommands = commands.filter(command => !isCommandSynced(command.id));
-      
-      return {
-        groups: localGroups.map(group => ({
-          ...group,
-          commandIds: localCommands
-            .filter(cmd => cmd.groups?.includes(group.id))
-            .map(cmd => cmd.id)
-        })),
-        commands: localCommands
-      };
-    }
-
-    // Показываем все команды для авторизованных пользователей
     return {
       groups: groups.map(group => ({
         ...group,
@@ -66,13 +21,9 @@ export const useCommands = () => {
       })),
       commands
     };
-  }, [groups, commands, isAuthenticated, isGroupSynced, isCommandSynced]);
+  }, [groups, commands]);
 
   return {
     data: menuData,
-    loading: commandsLoading || groupsLoading,
-    error: commandsError || groupsError,
-    reload: loadData,
-    isCommandSynced,
   };
 };

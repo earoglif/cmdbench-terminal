@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CommandGroup } from '@/shared/api/commandGroups';
+import { CommandGroup } from '@/stores/commandGroupsStore';
 
 interface GroupModalProps {
   isOpen: boolean;

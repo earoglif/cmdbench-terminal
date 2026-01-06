@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, createRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MentionsInput, Mention, OnChangeHandlerFunc } from 'react-mentions';
 import { Command, CommandField, CreateCommandData } from '@/stores/commandsStore';
-import { CommandGroup } from '@/shared/api/commandGroups';
+import { CommandGroup } from '@/stores/commandGroupsStore';
 import { CommandFieldEditor, CommandFieldEditorRef } from './CommandFieldEditor';
 
 interface CommandModalProps {

@@ -4,15 +4,14 @@ import ApplicationSettings from './ApplicationSettings';
 import AppearanceSettings from './AppearanceSettings';
 import CommandsSettings from './CommandsSettings';
 import ShortcutsSettings from './ShortcutsSettings';
-import AccountSettings from './AccountSettings';
 
-type SettingsSection = 'application' | 'appearance' | 'commands' | 'shortcuts' | 'account';
+type SettingsSection = 'application' | 'appearance' | 'commands' | 'shortcuts';
 
 const Settings: React.FC = () => {
   const { t } = useTranslation();
   const [selectedSection, setSelectedSection] = useState<SettingsSection>('application');
 
-  const sections: SettingsSection[] = ['application', 'appearance', 'commands', 'shortcuts', 'account'];
+  const sections: SettingsSection[] = ['application', 'appearance', 'commands', 'shortcuts'];
 
   const renderSectionContent = () => {
     switch (selectedSection) {
@@ -24,8 +23,6 @@ const Settings: React.FC = () => {
         return <CommandsSettings />;
       case 'shortcuts':
         return <ShortcutsSettings />;
-      case 'account':
-        return <AccountSettings />;
       default:
         return null;
     }

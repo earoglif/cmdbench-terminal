@@ -4,11 +4,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
 import { useTerminalStore } from '@/stores/terminalStore';
-import { useAuthStore } from '@/stores/authStore';
 import { useCommands } from '@hooks/useCommands';
-import { useCommandGroupsStore } from '@/stores/commandGroupsStore';
 import { ShellProfile } from '@/types/terminal';
-import { Command } from '@/shared/api/commands';
+import { Command } from '@/stores/commandsStore';
 import { MenuIcon, PlusIcon, MinimizeIcon, MaximizeIcon, RestoreIcon, CloseIcon } from '@/shared/icons';
 import {
   DndContext,
@@ -45,7 +43,6 @@ interface SortableTabItemProps {
 
 interface TabBarProps {
   onCommandClick?: (command: Command) => void;
-  onAuthModalOpen?: () => void;
 }
 
 const SortableTabItem: React.FC<SortableTabItemProps> = ({
@@ -114,12 +111,10 @@ const SortableTabItem: React.FC<SortableTabItemProps> = ({
   );
 };
 
-const TabBar: React.FC<TabBarProps> = ({ onCommandClick, onAuthModalOpen }) => {
+const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
   const { t } = useTranslation();
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, renameTab, reorderTabs, addSettingsTab } = useTerminalStore();
-  const { isAuthenticated, logout } = useAuthStore();
-  const { data: commandsData, isCommandSynced } = useCommands();
-  const { isGroupSynced } = useCommandGroupsStore();
+  const { data: commandsData } = useCommands();
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -192,14 +187,6 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick, onAuthModalOpen }) => {
     closeMenu();
   };
 
-  const handleAuthClick = () => {
-    if (isAuthenticated) {
-      logout();
-    } else {
-      onAuthModalOpen?.();
-    }
-    closeMenu();
-  };
 
   const handleSettingsClick = () => {
     addSettingsTab();
@@ -376,7 +363,6 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick, onAuthModalOpen }) => {
         </div>
         <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 max-h-[80vh] overflow-y-auto" style={{ gridTemplateColumns: '1fr', display: 'grid' }}>
           <li><a onClick={handleSettingsClick}>{t('menu.settings')}</a></li>
-          <li><a onClick={handleAuthClick}>{isAuthenticated ? t('menu.logout') : t('menu.login')}</a></li>
           
           {commandsData.groups.length > 0 && (
             <>
@@ -393,7 +379,6 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick, onAuthModalOpen }) => {
                     <details>
                       <summary 
                         style={{ color: group.color }}
-                        className={!isGroupSynced(group.id) ? 'italic' : ''}
                       >
                         {group.name}
                       </summary>
@@ -402,7 +387,6 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick, onAuthModalOpen }) => {
                           <li key={command.id}>
                             <a 
                               onClick={() => handleCommandClick(command)}
-                              className={!isCommandSynced(command.id) ? 'italic' : ''}
                             >
                               {command.name}
                             </a>

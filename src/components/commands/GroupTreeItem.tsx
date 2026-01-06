@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CommandGroup } from '@/shared/api/commandGroups';
+import { CommandGroup } from '@/stores/commandGroupsStore';
 import { Command } from '@/stores/commandsStore';
 import { useCommandGroupsStore } from '@/stores/commandGroupsStore';
 import { CommandItem } from './CommandItem';
@@ -9,7 +9,6 @@ interface GroupTreeItemProps {
   group: CommandGroup;
   level: number;
   commands: Command[];
-  isCommandSynced: (id: string) => boolean;
   onEditGroup: (group: CommandGroup) => void;
   onDeleteGroup: (id: string) => void;
   onAddChildGroup: (parentId: string) => void;
@@ -25,7 +24,6 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
   group,
   level,
   commands,
-  isCommandSynced,
   onEditGroup,
   onDeleteGroup,
   onAddChildGroup,
@@ -37,12 +35,11 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
   getCommandsByGroup,
 }) => {
   const { t } = useTranslation();
-  const { expandedGroups, toggleExpanded, isGroupSynced } = useCommandGroupsStore();
+  const { expandedGroups, toggleExpanded } = useCommandGroupsStore();
   const children = getChildGroups(group.id);
   const groupCommands = getCommandsByGroup(group.id);
   const hasChildren = children.length > 0 || groupCommands.length > 0;
   const isExpanded = expandedGroups.has(group.id);
-  const isSynced = isGroupSynced(group.id);
 
   return (
     <div className="select-none">
@@ -69,10 +66,7 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
           style={{ backgroundColor: group.color || '#6b7280' }}
         />
 
-        <span
-          className={`flex-1 font-medium truncate ${isSynced ? '' : 'italic text-base-content/70'}`}
-          title={isSynced ? t('commandGroups.syncedToCloud') : t('commandGroups.localOnly')}
-        >
+        <span className="flex-1 font-medium truncate">
           {group.name}
         </span>
 
@@ -126,7 +120,6 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
             <div key={command.id} style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}>
               <CommandItem
                 command={command}
-                isSynced={isCommandSynced(command.id)}
                 onEdit={onEditCommand}
                 onDelete={onDeleteCommand}
                 onToggleFavorite={onToggleFavorite}
@@ -139,7 +132,6 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
               group={child}
               level={level + 1}
               commands={commands}
-              isCommandSynced={isCommandSynced}
               onEditGroup={onEditGroup}
               onDeleteGroup={onDeleteGroup}
               onAddChildGroup={onAddChildGroup}

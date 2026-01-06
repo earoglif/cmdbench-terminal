@@ -4,8 +4,6 @@
   },
   "menu": {
     "settings": "Настройки",
-    "login": "Вход / регистрация",
-    "logout": "Выход",
     "commands": "Команды",
     "profiles": "Профили оболочки",
     "shortcuts": "Горячие клавиши",
@@ -30,8 +28,7 @@
       "application": "Приложение",
       "appearance": "Внешний вид",
       "commands": "Команды",
-      "shortcuts": "Горячие клавиши",
-      "account": "Аккаунт"
+      "shortcuts": "Горячие клавиши"
     }
   },
   "commandGroups": {
@@ -54,15 +51,7 @@
     "noGroups": "Группы еще не созданы",
     "createFirstGroup": "Создать первую группу",
     "confirmDelete": "Подтверждение удаления",
-    "confirmDeleteMessage": "Вы уверены, что хотите удалить группу \"{{name}}\"? Все подгруппы также будут удалены.",
-    "saveToCloud": "Сохранить в облако",
-    "loadFromCloud": "Загрузить из облака",
-    "lastSynced": "Последняя синхронизация",
-    "loginToSync": "Войдите, чтобы синхронизировать группы между устройствами",
-    "cloud": "Облако",
-    "local": "Локально",
-    "syncedToCloud": "Синхронизировано с облаком",
-    "localOnly": "Сохранено только локально"
+    "confirmDeleteMessage": "Вы уверены, что хотите удалить группу \"{{name}}\"? Все подгруппы также будут удалены."
   },
   "commands": {
     "title": "Команды и группы",
@@ -98,11 +87,6 @@
     "noGroupsAvailable": "Нет доступных групп. Сначала создайте группу.",
     "confirmDelete": "Подтверждение удаления",
     "confirmDeleteMessage": "Вы уверены, что хотите удалить команду \"{{name}}\"?",
-    "saveToCloud": "Сохранить в облако",
-    "loadFromCloud": "Загрузить из облака",
-    "loginToSync": "Войдите, чтобы синхронизировать команды между устройствами",
-    "syncedToCloud": "Синхронизировано с облаком",
-    "localOnly": "Сохранено только локально",
     "groupedView": "По группам",
     "ungroupedView": "Без группы",
     "noCommandsOrGroups": "Команды и группы еще не созданы",
@@ -131,69 +115,10 @@
       "unnamed": "Безымянное поле"
     }
   },
-  "auth": {
-    "login": {
-      "title": "Вход",
-      "emailOrUsername": "Email или имя пользователя",
-      "emailOrUsernamePlaceholder": "Введите email или имя пользователя",
-      "password": "Пароль",
-      "passwordPlaceholder": "Введите пароль",
-      "submit": "Войти"
-    },
-    "register": {
-      "title": "Регистрация",
-      "email": "Email",
-      "emailPlaceholder": "Введите email",
-      "username": "Имя пользователя",
-      "usernamePlaceholder": "Введите имя пользователя",
-      "password": "Пароль",
-      "passwordPlaceholder": "Введите пароль",
-      "confirmPassword": "Подтвердите пароль",
-      "confirmPasswordPlaceholder": "Повторите пароль",
-      "submit": "Зарегистрироваться"
-    },
-    "validation": {
-      "emailRequired": "Email обязателен",
-      "emailInvalid": "Неверный формат email",
-      "emailOrUsernameRequired": "Email или имя пользователя обязательно",
-      "usernameRequired": "Имя пользователя обязательно",
-      "usernameMinLength": "Имя пользователя должно содержать минимум 3 символа",
-      "passwordRequired": "Пароль обязателен",
-      "passwordMinLength": "Пароль должен содержать минимум 6 символов",
-      "passwordsDoNotMatch": "Пароли не совпадают"
-    },
-    "switchToRegister": "Нет аккаунта? Зарегистрироваться",
-    "switchToLogin": "Уже есть аккаунт? Войти",
-    "cancel": "Отмена"
-  },
-  "accountSettings": {
-    "title": "Настройки аккаунта",
-    "notAuthenticated": "Вы не авторизованы",
-    "loginRegister": "Войти / Зарегистрироваться",
-    "name": "Имя",
-    "namePlaceholder": "Имя",
-    "email": "E-mail",
-    "emailPlaceholder": "E-mail",
-    "edit": "Редактировать",
-    "save": "Сохранить",
-    "cancel": "Отмена",
-    "updateError": "Ошибка при обновлении профиля"
-  },
   "applicationSettings": {
     "title": "Настройки приложения",
     "language": "Язык интерфейса",
-    "languageDescription": "Выберите язык интерфейса приложения",
-    "remoteControl": "Удаленное управление",
-    "remoteControlDescription": "Разрешить удаленное выполнение команд с мобильного приложения",
-    "remoteControlEnabled": "Удаленное управление включено",
-    "remoteControlDisabled": "Удаленное управление отключено",
-    "remoteControlLoginRequired": "Для удаленного управления необходимо войти в аккаунт",
-    "remoteStatus": {
-      "disconnected": "Отключено",
-      "connecting": "Подключение...",
-      "connected": "Подключено к серверу",
-      "error": "Ошибка подключения"
-    }
+    "languageDescription": "Выберите язык интерфейса приложения"
   },
   "commandExecute": {
     "execute": "Выполнить",

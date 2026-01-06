@@ -1,27 +1,42 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { commandsApi, Command, CommandField, CreateCommandData } from '@/shared/api/commands';
 
 const generateId = () => crypto.randomUUID();
 
-interface CommandsState {
-  commands: Command[];
-  syncedCommandIds: Set<string>;
-  isLoading: boolean;
-  isSyncing: boolean;
-  error: string | null;
-  lastSyncedAt: string | null;
+export interface CommandField {
+  id: string;
+  type: 'string' | 'number' | 'file' | 'directory' | 'select';
+  isRequired: boolean;
+  requestBeforeExecution?: boolean;
+  name: string;
+  description?: string;
+  value: string | string[];
 }
 
-interface BulkLoadedCommand {
+export interface Command {
   id: string;
   name: string;
   description?: string;
   command: string;
-  fields: any[];
-  tags: string[];
-  isFavorite: boolean;
-  deviceId?: string;
+  fields: CommandField[];
+  tags?: string[];
+  isFavorite?: boolean;
+  groups?: string[];
+  executionCount?: number;
+  lastExecutedAt?: string;
+}
+
+export interface CreateCommandData {
+  name: string;
+  description?: string;
+  command: string;
+  fields?: CommandField[];
+  tags?: string[];
+  groups?: string[];
+}
+
+interface CommandsState {
+  commands: Command[];
 }
 
 interface CommandsActions {
@@ -31,11 +46,7 @@ interface CommandsActions {
   toggleFavorite: (id: string) => void;
   getCommandsByGroup: (groupId?: string) => Command[];
   getCommandById: (id: string) => Command | undefined;
-  syncToBackend: () => Promise<void>;
-  loadFromBackend: () => Promise<void>;
-  loadFromBulkData: (commands: BulkLoadedCommand[], groupCommandMap: Map<string, string[]>) => void;
   clearError: () => void;
-  isCommandSynced: (id: string) => boolean;
 }
 
 type CommandsStore = CommandsState & CommandsActions;
@@ -44,11 +55,6 @@ export const useCommandsStore = create<CommandsStore>()(
   persist(
     (set, get) => ({
       commands: [],
-      syncedCommandIds: new Set<string>(),
-      isLoading: false,
-      isSyncing: false,
-      error: null,
-      lastSyncedAt: null,
 
       addCommand: (data) => {
         const newCommand: Command = {
@@ -70,27 +76,17 @@ export const useCommandsStore = create<CommandsStore>()(
       },
 
       updateCommand: (id, data) => {
-        set(state => {
-          const newSyncedIds = new Set(state.syncedCommandIds);
-          newSyncedIds.delete(id);
-          return {
-            commands: state.commands.map(c =>
-              c.id === id ? { ...c, ...data } : c
-            ),
-            syncedCommandIds: newSyncedIds,
-          };
-        });
+        set(state => ({
+          commands: state.commands.map(c =>
+            c.id === id ? { ...c, ...data } : c
+          ),
+        }));
       },
 
       deleteCommand: (id) => {
-        set(state => {
-          const newSyncedIds = new Set(state.syncedCommandIds);
-          newSyncedIds.delete(id);
-          return {
-            commands: state.commands.filter(c => c.id !== id),
-            syncedCommandIds: newSyncedIds,
-          };
-        });
+        set(state => ({
+          commands: state.commands.filter(c => c.id !== id),
+        }));
       },
 
       toggleFavorite: (id) => {
@@ -113,135 +109,15 @@ export const useCommandsStore = create<CommandsStore>()(
         return get().commands.find(c => c.id === id);
       },
 
-      syncToBackend: async () => {
-        set({ isSyncing: true, error: null });
-        try {
-          const { commands } = get();
-          const commandsToSync = commands.map(c => {
-            const cmd: Omit<Command, 'userId' | 'createdAt' | 'updatedAt'> = {
-              id: c.id,
-              name: c.name,
-              command: c.command,
-              fields: c.fields,
-              tags: c.tags,
-              isFavorite: c.isFavorite,
-              description: c.description,
-              deviceId: c.deviceId,
-              groups: c.groups,
-              executionCount: c.executionCount,
-              lastExecutedAt: c.lastExecutedAt,
-            };
-            return cmd;
-          });
-
-          await commandsApi.bulkSaveCommands(commandsToSync);
-
-          const commandGroupsData = commands
-            .filter(c => c.groups && c.groups.length > 0)
-            .map(c => ({
-              commandId: c.id,
-              groupIds: c.groups!.map(g => typeof g === 'string' ? g : (g as any).id).filter(Boolean),
-            }))
-            .filter(c => c.groupIds.length > 0);
-
-          if (commandGroupsData.length > 0) {
-            await commandsApi.bulkSaveCommandGroups(commandGroupsData);
-          }
-
-          const syncedIds = new Set(commands.map(c => c.id));
-          set({
-            lastSyncedAt: new Date().toISOString(),
-            isSyncing: false,
-            syncedCommandIds: syncedIds,
-          });
-        } catch (error: any) {
-          const message = error.response?.data?.message || error.message || 'Sync failed';
-          set({ error: message, isSyncing: false });
-          throw error;
-        }
-      },
-
-      loadFromBackend: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const cloudCommands = await commandsApi.getCommands({ includeGroups: true });
-
-          const cloudCommandIds = new Set(cloudCommands.map(c => c.id));
-          const { commands: localCommands, syncedCommandIds: oldSyncedIds } = get();
-
-          const localOnlyCommands = localCommands.filter(
-            c => !cloudCommandIds.has(c.id) && !oldSyncedIds.has(c.id)
-          );
-
-          const mergedCommands = [...cloudCommands, ...localOnlyCommands];
-          const newSyncedIds = new Set(cloudCommands.map(c => c.id));
-
-          set({
-            commands: mergedCommands,
-            lastSyncedAt: new Date().toISOString(),
-            isLoading: false,
-            syncedCommandIds: newSyncedIds,
-          });
-        } catch (error: any) {
-          const message = error.response?.data?.message || error.message || 'Load failed';
-          set({ error: message, isLoading: false });
-          throw error;
-        }
-      },
-
-      loadFromBulkData: (bulkCommands, groupCommandMap) => {
-        const cloudCommands: Command[] = bulkCommands.map(c => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-          command: c.command,
-          fields: c.fields || [],
-          tags: c.tags || [],
-          isFavorite: c.isFavorite || false,
-          deviceId: c.deviceId,
-          groups: groupCommandMap.get(c.id) || [],
-        }));
-
-        const cloudCommandIds = new Set(cloudCommands.map(c => c.id));
-        const { commands: localCommands, syncedCommandIds: oldSyncedIds } = get();
-
-        const localOnlyCommands = localCommands.filter(
-          c => !cloudCommandIds.has(c.id) && !oldSyncedIds.has(c.id)
-        );
-
-        const mergedCommands = [...cloudCommands, ...localOnlyCommands];
-        const newSyncedIds = new Set(cloudCommands.map(c => c.id));
-
-        set({
-          commands: mergedCommands,
-          lastSyncedAt: new Date().toISOString(),
-          syncedCommandIds: newSyncedIds,
-        });
-      },
-
       clearError: () => {
-        set({ error: null });
-      },
-
-      isCommandSynced: (id) => {
-        return get().syncedCommandIds.has(id);
+        // No-op, kept for compatibility
       },
     }),
     {
       name: 'commands-storage',
       partialize: (state) => ({
         commands: state.commands,
-        syncedCommandIds: Array.from(state.syncedCommandIds),
-        lastSyncedAt: state.lastSyncedAt,
-      }),
-      merge: (persisted: any, current) => ({
-        ...current,
-        ...persisted,
-        syncedCommandIds: new Set(persisted?.syncedCommandIds || []),
       }),
     }
   )
 );
-
-export type { Command, CommandField, CreateCommandData };
-

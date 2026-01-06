@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import MultipleTerminals from '@components/terminal/MultipleTerminals';
 import TabBar from '@components/terminal/TabBar';
-import AuthModal from '@components/AuthModal';
 import { CommandExecuteDialog } from '@components/commands/CommandExecuteDialog';
 import { useMultipleTerminals } from '@hooks/useMultipleTerminals';
 import { useKeyboardShortcuts } from '@hooks/useKeyboardShortcuts';
 import { useTerminalStore } from '@/stores/terminalStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { Command, CommandField } from '@/shared/api/commands';
+import { Command, CommandField } from '@/stores/commandsStore';
 
 interface ExecuteDialogState {
   isOpen: boolean;
@@ -21,7 +20,6 @@ const App: React.FC = () => {
   const { containerRef, runCommand } = useMultipleTerminals();
   const { tabs, activeTabId } = useTerminalStore();
   const { language } = useSettingsStore();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   useKeyboardShortcuts();
   const [executeDialog, setExecuteDialog] = useState<ExecuteDialogState>({
     isOpen: false,
@@ -86,9 +84,8 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-base-100" data-theme="dark">
-      <TabBar onCommandClick={handleCommandClick} onAuthModalOpen={() => setIsAuthModalOpen(true)} />
+      <TabBar onCommandClick={handleCommandClick} />
       <MultipleTerminals ref={containerRef} />
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       {executeDialog.command && (
         <CommandExecuteDialog
           isOpen={executeDialog.isOpen}

@@ -4,7 +4,6 @@ import { Command } from '@/stores/commandsStore';
 
 interface CommandItemProps {
   command: Command;
-  isSynced: boolean;
   onEdit: (command: Command) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string) => void;
@@ -13,7 +12,6 @@ interface CommandItemProps {
 
 export const CommandItem: React.FC<CommandItemProps> = ({
   command,
-  isSynced,
   onEdit,
   onDelete,
   onToggleFavorite,
@@ -45,10 +43,7 @@ export const CommandItem: React.FC<CommandItemProps> = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span
-            className={`font-medium truncate ${isSynced ? '' : 'italic text-base-content/70'}`}
-            title={isSynced ? t('commands.syncedToCloud') : t('commands.localOnly')}
-          >
+          <span className="font-medium truncate">
             {command.name}
           </span>
           {command.fields && command.fields.length > 0 && (

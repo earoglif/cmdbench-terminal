@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
-import { CommandField } from '@/shared/api/commands';
+import { CommandField } from '@/stores/commandsStore';
 
 interface FieldValue {
   id: string;
