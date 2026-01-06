@@ -36,8 +36,8 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
 }) => {
   const { t } = useTranslation();
   const { expandedGroups, toggleExpanded } = useCommandGroupsStore();
-  const children = getChildGroups(group.id);
-  const groupCommands = getCommandsByGroup(group.id);
+  const children = getChildGroups(group.id).sort((a, b) => a.name.localeCompare(b.name));
+  const groupCommands = getCommandsByGroup(group.id).sort((a, b) => a.name.localeCompare(b.name));
   const hasChildren = children.length > 0 || groupCommands.length > 0;
   const isExpanded = expandedGroups.has(group.id);
 

@@ -201,7 +201,6 @@ export const CommandModal: React.FC<CommandModalProps> = ({
                   <label className="label">
                     <span className="label-text font-semibold">{t('commands.command')}</span>
                   </label>
-                  {/* @ts-expect-error - react-mentions types conflict with React 18 */}
                   <MentionsInput
                     inputRef={commandInputRef}
                     value={commandText}
@@ -212,7 +211,6 @@ export const CommandModal: React.FC<CommandModalProps> = ({
                     autoComplete="off"
                     autoCorrect="off"
                   >
-                    {/* @ts-expect-error - react-mentions types conflict with React 18 */}
                     <Mention
                       trigger="#"
                       markup="#[__display__](__id__)"
@@ -317,10 +315,6 @@ export const CommandModal: React.FC<CommandModalProps> = ({
                           className="checkbox checkbox-sm"
                           checked={selectedGroups.includes(group.id)}
                           onChange={() => handleToggleGroup(group.id)}
-                        />
-                        <div
-                          className="w-3 h-3 rounded-sm flex-shrink-0"
-                          style={{ backgroundColor: group.color || '#6b7280' }}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{getGroupPath(group.id)}</p>

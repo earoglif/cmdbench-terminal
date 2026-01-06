@@ -364,39 +364,56 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
         <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 max-h-[80vh] overflow-y-auto" style={{ gridTemplateColumns: '1fr', display: 'grid' }}>
           <li><a onClick={handleSettingsClick}>{t('menu.settings')}</a></li>
           
-          {commandsData.groups.length > 0 && (
-            <>
-              <li className="menu-title">{t('menu.commands')}</li>
-              {commandsData.groups.map((group) => {
-                const groupCommands = commandsData.commands.filter(cmd => 
-                  group.commandIds.includes(cmd.id)
-                );
-                
-                if (groupCommands.length === 0) return null;
-                
-                return (
-                  <li key={group.id}>
-                    <details>
-                      <summary>
-                        {group.name}
-                      </summary>
-                      <ul>
-                        {groupCommands.map((command) => (
-                          <li key={command.id}>
-                            <a 
-                              onClick={() => handleCommandClick(command)}
-                            >
-                              {command.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
+          {(() => {
+            const commandsWithoutGroups = commandsData.commands.filter(cmd => 
+              !cmd.groups || cmd.groups.length === 0
+            );
+            const hasGroups = commandsData.groups.length > 0;
+            const hasCommandsWithoutGroups = commandsWithoutGroups.length > 0;
+            
+            if (!hasGroups && !hasCommandsWithoutGroups) return null;
+            
+            return (
+              <>
+                <li className="menu-title">{t('menu.commands')}</li>
+                {commandsData.groups.map((group) => {
+                  const groupCommands = commandsData.commands.filter(cmd => 
+                    group.commandIds.includes(cmd.id)
+                  );
+                  
+                  if (groupCommands.length === 0) return null;
+                  
+                  return (
+                    <li key={group.id}>
+                      <details>
+                        <summary>
+                          {group.name}
+                        </summary>
+                        <ul>
+                          {groupCommands.map((command) => (
+                            <li key={command.id}>
+                              <a 
+                                onClick={() => handleCommandClick(command)}
+                              >
+                                {command.name}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  );
+                })}
+                {commandsWithoutGroups.map((command) => (
+                  <li key={command.id}>
+                    <a onClick={() => handleCommandClick(command)}>
+                      {command.name}
+                    </a>
                   </li>
-                );
-              })}
-            </>
-          )}
+                ))}
+              </>
+            );
+          })()}
           
           <li className="menu-title">{t('menu.profiles')}</li>
           {shellProfiles.map((profile) => (

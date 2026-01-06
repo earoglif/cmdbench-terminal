@@ -52,11 +52,8 @@ const CommandsSettings: React.FC = () => {
     name: '',
   });
 
-  // View state
-  const [viewMode, setViewMode] = useState<'tree' | 'ungrouped'>('tree');
-
-  const rootGroups = getChildGroups(undefined);
-  const ungroupedCommands = getCommandsByGroup(undefined);
+  const rootGroups = getChildGroups(undefined).sort((a, b) => a.name.localeCompare(b.name));
+  const ungroupedCommands = getCommandsByGroup(undefined).sort((a, b) => a.name.localeCompare(b.name));
 
   // Group handlers
   const handleAddGroup = useCallback((parentId?: string) => {
@@ -158,93 +155,57 @@ const CommandsSettings: React.FC = () => {
         </div>
       </div>
 
-
-      <div className="tabs tabs-boxed mb-4">
-        <button
-          className={`tab ${viewMode === 'tree' ? 'tab-active' : ''}`}
-          onClick={() => setViewMode('tree')}
-        >
-          {t('commands.groupedView')}
-        </button>
-        <button
-          className={`tab ${viewMode === 'ungrouped' ? 'tab-active' : ''}`}
-          onClick={() => setViewMode('ungrouped')}
-        >
-          {t('commands.ungroupedView')} {ungroupedCommands.length > 0 && `(${ungroupedCommands.length})`}
-        </button>
-      </div>
-
-      <div className="bg-base-100 border border-base-300 rounded-lg min-h-[300px]">
-        {viewMode === 'tree' ? (
-          rootGroups.length === 0 && commands.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[300px] text-base-content/60">
-              <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-              <p className="text-lg mb-2">{t('commands.noCommandsOrGroups')}</p>
-              <div className="flex gap-2">
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleAddCommand()}
-                >
-                  {t('commands.createFirstCommand')}
-                </button>
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={() => handleAddGroup()}
-                >
-                  {t('commandGroups.createFirstGroup')}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="py-2">
-              {rootGroups.map(group => (
-                <GroupTreeItem
-                  key={group.id}
-                  group={group}
-                  level={0}
-                  commands={commands}
-                  onEditGroup={handleEditGroup}
-                  onDeleteGroup={handleDeleteGroup}
-                  onAddChildGroup={handleAddGroup}
-                  onAddCommand={handleAddCommand}
-                  onEditCommand={handleEditCommand}
-                  onDeleteCommand={handleDeleteCommand}
-                  onToggleFavorite={toggleFavorite}
-                  getChildGroups={getChildGroups}
-                  getCommandsByGroup={getCommandsByGroup}
-                />
-              ))}
-            </div>
-          )
-        ) : (
-          ungroupedCommands.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[300px] text-base-content/60">
-              <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-lg mb-2">{t('commands.noUngroupedCommands')}</p>
+      <div className="bg-base-100 min-h-[300px]">
+        {rootGroups.length === 0 && ungroupedCommands.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[300px] text-base-content/60">
+            <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            <p className="text-lg mb-2">{t('commands.noCommandsOrGroups')}</p>
+            <div className="flex gap-2">
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => handleAddCommand()}
               >
-                {t('commands.createCommand')}
+                {t('commands.createFirstCommand')}
+              </button>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => handleAddGroup()}
+              >
+                {t('commandGroups.createFirstGroup')}
               </button>
             </div>
-          ) : (
-            <div className="py-2">
-              {ungroupedCommands.map(command => (
-                <CommandItem
-                  key={command.id}
-                  command={command}
-                  onEdit={handleEditCommand}
-                  onDelete={handleDeleteCommand}
-                  onToggleFavorite={toggleFavorite}
-                />
-              ))}
-            </div>
-          )
+          </div>
+        ) : (
+          <div className="py-2">
+            {rootGroups.map(group => (
+              <GroupTreeItem
+                key={group.id}
+                group={group}
+                level={0}
+                commands={commands}
+                onEditGroup={handleEditGroup}
+                onDeleteGroup={handleDeleteGroup}
+                onAddChildGroup={handleAddGroup}
+                onAddCommand={handleAddCommand}
+                onEditCommand={handleEditCommand}
+                onDeleteCommand={handleDeleteCommand}
+                onToggleFavorite={toggleFavorite}
+                getChildGroups={getChildGroups}
+                getCommandsByGroup={getCommandsByGroup}
+              />
+            ))}
+            {ungroupedCommands.map(command => (
+              <CommandItem
+                key={command.id}
+                command={command}
+                onEdit={handleEditCommand}
+                onDelete={handleDeleteCommand}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))}
+          </div>
         )}
       </div>
 
