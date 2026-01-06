@@ -81,7 +81,6 @@
     "fieldsDescription": "Fields allow you to parameterize your command",
     "addField": "Add Field",
     "noFields": "No fields added yet",
-    "fieldsCount": "fields",
     "groupsDescription": "Assign this command to groups",
     "noGroupsAvailable": "No groups available. Create a group first.",
     "confirmDelete": "Confirm Deletion",

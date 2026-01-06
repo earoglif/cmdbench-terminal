@@ -46,11 +46,6 @@ export const CommandItem: React.FC<CommandItemProps> = ({
           <span className="font-medium truncate">
             {command.name}
           </span>
-          {command.fields && command.fields.length > 0 && (
-            <span className="badge badge-xs badge-ghost">
-              {command.fields.length} {t('commands.fieldsCount')}
-            </span>
-          )}
         </div>
         {command.description && (
           <p className="text-xs text-base-content/60 truncate">{command.description}</p>
