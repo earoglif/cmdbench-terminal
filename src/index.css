@@ -1,0 +1,77 @@
+@import "@xterm/xterm/css/xterm.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Стили для textarea без focus outline */
+.textarea-no-focus {
+  @apply textarea textarea-bordered w-full;
+  min-height: 5rem;
+}
+
+.textarea-no-focus:focus,
+.textarea-no-focus:focus-within {
+  outline: none;
+}
+
+/* Стили для react-mentions */
+.mentions-input {
+  width: 100%;
+  min-height: 5rem;
+}
+
+.mentions-input textarea {
+  @apply textarea textarea-bordered w-full font-mono text-sm;
+  min-height: 5rem;
+  padding: 0.5rem 0.75rem;
+  resize: none;
+}
+
+.mentions-input__control {
+  min-height: 5rem;
+}
+
+.mentions-input__highlighter {
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+}
+
+.mentions-input__suggestions {
+  background-color: oklch(var(--b1)) !important;
+  border-color: oklch(var(--b3)) !important;
+  @apply border rounded-lg shadow-lg;
+  z-index: 100 !important;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.25rem;
+}
+
+.mentions-input__suggestions__list {
+  @apply py-1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mentions-input__suggestions__item {
+  @apply px-3 py-2 cursor-pointer text-sm text-base-content;
+  transition: background-color 0.15s ease;
+}
+
+.mentions-input__suggestions__item:hover,
+.mentions-input__suggestions__item--focused {
+  @apply bg-base-200;
+}
+
+/* Стиль для выделения mention в тексте */
+.mention-highlight {
+  @apply bg-primary/20 text-primary rounded px-1;
+}

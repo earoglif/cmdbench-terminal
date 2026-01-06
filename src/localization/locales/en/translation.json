@@ -1,0 +1,208 @@
+{
+  "app": {
+    "title": "Tauri Terminal"
+  },
+  "menu": {
+    "settings": "Settings",
+    "login": "Login / Register",
+    "logout": "Logout",
+    "commands": "Commands",
+    "profiles": "Shell Profiles",
+    "shortcuts": "Keyboard Shortcuts",
+    "newTab": "Ctrl+T - New Tab",
+    "closeTab": "Ctrl+W - Close Tab",
+    "nextTab": "Ctrl+Tab - Next Tab",
+    "switchTab": "Ctrl+1-9 - Switch Tab"
+  },
+  "tabBar": {
+    "addNewTerminal": "Add New Terminal",
+    "editTabTitle": "Edit Tab Title",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "commandInput": {
+    "placeholder": "Enter command...",
+    "run": "Run"
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "application": "Application",
+      "appearance": "Appearance",
+      "commands": "Commands",
+      "shortcuts": "Keyboard Shortcuts",
+      "account": "Account"
+    }
+  },
+  "commandGroups": {
+    "title": "Command Groups",
+    "addGroup": "Add Group",
+    "addSubgroup": "Add Subgroup",
+    "createGroup": "Create Group",
+    "editGroup": "Edit Group",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "name": "Name",
+    "namePlaceholder": "Enter group name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter group description",
+    "color": "Color",
+    "parentGroup": "Parent Group",
+    "noParent": "No parent (root level)",
+    "noGroups": "No groups created yet",
+    "createFirstGroup": "Create First Group",
+    "confirmDelete": "Confirm Deletion",
+    "confirmDeleteMessage": "Are you sure you want to delete the group \"{{name}}\"? All subgroups will also be deleted.",
+    "saveToCloud": "Save to Cloud",
+    "loadFromCloud": "Load from Cloud",
+    "lastSynced": "Last synced",
+    "loginToSync": "Log in to sync groups across devices",
+    "cloud": "Cloud",
+    "local": "Local",
+    "syncedToCloud": "Synced to cloud",
+    "localOnly": "Saved locally only"
+  },
+  "commands": {
+    "title": "Commands & Groups",
+    "addCommand": "Add Command",
+    "createCommand": "Create Command",
+    "editCommand": "Edit Command",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "execute": "Execute",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "name": "Name",
+    "namePlaceholder": "Enter command name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter command description",
+    "command": "Command",
+    "commandPlaceholder": "Enter command to execute",
+    "commandHint": "Use #fieldName to reference fields in the command",
+    "tags": "Tags",
+    "tagsPlaceholder": "Enter tags separated by commas",
+    "tabs": {
+      "basic": "Basic",
+      "fields": "Fields",
+      "groups": "Groups"
+    },
+    "fieldsDescription": "Fields allow you to parameterize your command",
+    "addField": "Add Field",
+    "noFields": "No fields added yet",
+    "fieldsCount": "fields",
+    "groupsDescription": "Assign this command to groups",
+    "noGroupsAvailable": "No groups available. Create a group first.",
+    "confirmDelete": "Confirm Deletion",
+    "confirmDeleteMessage": "Are you sure you want to delete the command \"{{name}}\"?",
+    "saveToCloud": "Save to Cloud",
+    "loadFromCloud": "Load from Cloud",
+    "loginToSync": "Log in to sync commands across devices",
+    "syncedToCloud": "Synced to cloud",
+    "localOnly": "Saved locally only",
+    "groupedView": "Grouped",
+    "ungroupedView": "Ungrouped",
+    "noCommandsOrGroups": "No commands or groups created yet",
+    "createFirstCommand": "Create First Command",
+    "noUngroupedCommands": "No ungrouped commands",
+    "field": {
+      "name": "Field Name",
+      "namePlaceholder": "Enter field name",
+      "type": "Type",
+      "types": {
+        "string": "Text",
+        "number": "Number",
+        "file": "File",
+        "directory": "Directory",
+        "select": "Select"
+      },
+      "description": "Description",
+      "descriptionPlaceholder": "Enter field description",
+      "value": "Default Value",
+      "defaultValue": "Enter default value",
+      "defaultPath": "Enter default path",
+      "selectOptions": "Enter options, one per line",
+      "isRequired": "Required",
+      "requestBeforeExecution": "Ask before execution",
+      "required": "Required",
+      "unnamed": "Unnamed field"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "emailOrUsername": "Email or Username",
+      "emailOrUsernamePlaceholder": "Enter email or username",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "submit": "Login"
+    },
+    "register": {
+      "title": "Register",
+      "email": "Email",
+      "emailPlaceholder": "Enter email",
+      "username": "Username",
+      "usernamePlaceholder": "Enter username",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Repeat password",
+      "submit": "Register"
+    },
+    "validation": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email format",
+      "emailOrUsernameRequired": "Email or username is required",
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "passwordsDoNotMatch": "Passwords do not match"
+    },
+    "switchToRegister": "Don't have an account? Register",
+    "switchToLogin": "Already have an account? Login",
+    "cancel": "Cancel"
+  },
+  "accountSettings": {
+    "title": "Account Settings",
+    "notAuthenticated": "You are not authenticated",
+    "loginRegister": "Login / Register",
+    "name": "Name",
+    "namePlaceholder": "Name",
+    "email": "E-mail",
+    "emailPlaceholder": "E-mail",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "updateError": "Failed to update profile"
+  },
+  "applicationSettings": {
+    "title": "Application Settings",
+    "language": "Interface Language",
+    "languageDescription": "Select the application interface language",
+    "remoteControl": "Remote Control",
+    "remoteControlDescription": "Allow remote command execution from mobile app",
+    "remoteControlEnabled": "Remote control enabled",
+    "remoteControlDisabled": "Remote control disabled",
+    "remoteControlLoginRequired": "Login required for remote control",
+    "remoteStatus": {
+      "disconnected": "Disconnected",
+      "connecting": "Connecting...",
+      "connected": "Connected to server",
+      "error": "Connection error"
+    }
+  },
+  "commandExecute": {
+    "execute": "Execute",
+    "cancel": "Cancel"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "app": {
+    "title": "Tauri Terminal"
+  },
+  "menu": {
+    "settings": "Настройки",
+    "login": "Вход / регистрация",
+    "logout": "Выход",
+    "commands": "Команды",
+    "profiles": "Профили оболочки",
+    "shortcuts": "Горячие клавиши",
+    "newTab": "Ctrl+T - Новый таб",
+    "closeTab": "Ctrl+W - Закрыть таб",
+    "nextTab": "Ctrl+Tab - Следующий таб",
+    "switchTab": "Ctrl+1-9 - Переключение"
+  },
+  "tabBar": {
+    "addNewTerminal": "Добавить новый терминал",
+    "editTabTitle": "Редактировать заголовок таба",
+    "save": "Сохранить",
+    "cancel": "Отмена"
+  },
+  "commandInput": {
+    "placeholder": "Введите команду...",
+    "run": "Запустить"
+  },
+  "settings": {
+    "title": "Настройки",
+    "sections": {
+      "application": "Приложение",
+      "appearance": "Внешний вид",
+      "commands": "Команды",
+      "shortcuts": "Горячие клавиши",
+      "account": "Аккаунт"
+    }
+  },
+  "commandGroups": {
+    "title": "Группы команд",
+    "addGroup": "Добавить группу",
+    "addSubgroup": "Добавить подгруппу",
+    "createGroup": "Создать группу",
+    "editGroup": "Редактировать группу",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "name": "Название",
+    "namePlaceholder": "Введите название группы",
+    "description": "Описание",
+    "descriptionPlaceholder": "Введите описание группы",
+    "color": "Цвет",
+    "parentGroup": "Родительская группа",
+    "noParent": "Без родителя (корневой уровень)",
+    "noGroups": "Группы еще не созданы",
+    "createFirstGroup": "Создать первую группу",
+    "confirmDelete": "Подтверждение удаления",
+    "confirmDeleteMessage": "Вы уверены, что хотите удалить группу \"{{name}}\"? Все подгруппы также будут удалены.",
+    "saveToCloud": "Сохранить в облако",
+    "loadFromCloud": "Загрузить из облака",
+    "lastSynced": "Последняя синхронизация",
+    "loginToSync": "Войдите, чтобы синхронизировать группы между устройствами",
+    "cloud": "Облако",
+    "local": "Локально",
+    "syncedToCloud": "Синхронизировано с облаком",
+    "localOnly": "Сохранено только локально"
+  },
+  "commands": {
+    "title": "Команды и группы",
+    "addCommand": "Добавить команду",
+    "createCommand": "Создать команду",
+    "editCommand": "Редактировать команду",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "execute": "Выполнить",
+    "favorite": "Добавить в избранное",
+    "unfavorite": "Убрать из избранного",
+    "name": "Название",
+    "namePlaceholder": "Введите название команды",
+    "description": "Описание",
+    "descriptionPlaceholder": "Введите описание команды",
+    "command": "Команда",
+    "commandPlaceholder": "Введите команду для выполнения",
+    "commandHint": "Используйте #имяПоля для ссылки на поля в команде",
+    "tags": "Теги",
+    "tagsPlaceholder": "Введите теги через запятую",
+    "tabs": {
+      "basic": "Основное",
+      "fields": "Поля",
+      "groups": "Группы"
+    },
+    "fieldsDescription": "Поля позволяют параметризовать вашу команду",
+    "addField": "Добавить поле",
+    "noFields": "Поля еще не добавлены",
+    "fieldsCount": "полей",
+    "groupsDescription": "Назначьте эту команду группам",
+    "noGroupsAvailable": "Нет доступных групп. Сначала создайте группу.",
+    "confirmDelete": "Подтверждение удаления",
+    "confirmDeleteMessage": "Вы уверены, что хотите удалить команду \"{{name}}\"?",
+    "saveToCloud": "Сохранить в облако",
+    "loadFromCloud": "Загрузить из облака",
+    "loginToSync": "Войдите, чтобы синхронизировать команды между устройствами",
+    "syncedToCloud": "Синхронизировано с облаком",
+    "localOnly": "Сохранено только локально",
+    "groupedView": "По группам",
+    "ungroupedView": "Без группы",
+    "noCommandsOrGroups": "Команды и группы еще не созданы",
+    "createFirstCommand": "Создать первую команду",
+    "noUngroupedCommands": "Нет команд без группы",
+    "field": {
+      "name": "Имя поля",
+      "namePlaceholder": "Введите имя поля",
+      "type": "Тип",
+      "types": {
+        "string": "Текст",
+        "number": "Число",
+        "file": "Файл",
+        "directory": "Папка",
+        "select": "Выбор"
+      },
+      "description": "Описание",
+      "descriptionPlaceholder": "Введите описание поля",
+      "value": "Значение по умолчанию",
+      "defaultValue": "Введите значение по умолчанию",
+      "defaultPath": "Введите путь по умолчанию",
+      "selectOptions": "Введите варианты, каждый с новой строки",
+      "isRequired": "Обязательное",
+      "requestBeforeExecution": "Спрашивать перед выполнением",
+      "required": "Обязат.",
+      "unnamed": "Безымянное поле"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Вход",
+      "emailOrUsername": "Email или имя пользователя",
+      "emailOrUsernamePlaceholder": "Введите email или имя пользователя",
+      "password": "Пароль",
+      "passwordPlaceholder": "Введите пароль",
+      "submit": "Войти"
+    },
+    "register": {
+      "title": "Регистрация",
+      "email": "Email",
+      "emailPlaceholder": "Введите email",
+      "username": "Имя пользователя",
+      "usernamePlaceholder": "Введите имя пользователя",
+      "password": "Пароль",
+      "passwordPlaceholder": "Введите пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "confirmPasswordPlaceholder": "Повторите пароль",
+      "submit": "Зарегистрироваться"
+    },
+    "validation": {
+      "emailRequired": "Email обязателен",
+      "emailInvalid": "Неверный формат email",
+      "emailOrUsernameRequired": "Email или имя пользователя обязательно",
+      "usernameRequired": "Имя пользователя обязательно",
+      "usernameMinLength": "Имя пользователя должно содержать минимум 3 символа",
+      "passwordRequired": "Пароль обязателен",
+      "passwordMinLength": "Пароль должен содержать минимум 6 символов",
+      "passwordsDoNotMatch": "Пароли не совпадают"
+    },
+    "switchToRegister": "Нет аккаунта? Зарегистрироваться",
+    "switchToLogin": "Уже есть аккаунт? Войти",
+    "cancel": "Отмена"
+  },
+  "accountSettings": {
+    "title": "Настройки аккаунта",
+    "notAuthenticated": "Вы не авторизованы",
+    "loginRegister": "Войти / Зарегистрироваться",
+    "name": "Имя",
+    "namePlaceholder": "Имя",
+    "email": "E-mail",
+    "emailPlaceholder": "E-mail",
+    "edit": "Редактировать",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "updateError": "Ошибка при обновлении профиля"
+  },
+  "applicationSettings": {
+    "title": "Настройки приложения",
+    "language": "Язык интерфейса",
+    "languageDescription": "Выберите язык интерфейса приложения",
+    "remoteControl": "Удаленное управление",
+    "remoteControlDescription": "Разрешить удаленное выполнение команд с мобильного приложения",
+    "remoteControlEnabled": "Удаленное управление включено",
+    "remoteControlDisabled": "Удаленное управление отключено",
+    "remoteControlLoginRequired": "Для удаленного управления необходимо войти в аккаунт",
+    "remoteStatus": {
+      "disconnected": "Отключено",
+      "connecting": "Подключение...",
+      "connected": "Подключено к серверу",
+      "error": "Ошибка подключения"
+    }
+  },
+  "commandExecute": {
+    "execute": "Выполнить",
+    "cancel": "Отмена"
+  },
+  "window": {
+    "minimize": "Свернуть",
+    "maximize": "Развернуть",
+    "restore": "Восстановить",
+    "close": "Закрыть"
+  }
+}
