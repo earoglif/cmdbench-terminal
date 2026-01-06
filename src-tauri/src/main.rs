@@ -391,7 +391,7 @@ fn main() {
                 "main",
                 WebviewUrl::default()
             )
-            .title("tauri-terminal")
+            .title("cmdbench-terminal")
             .inner_size(1100.0, 686.0)
             .min_inner_size(400.0, 410.0)
             .resizable(true)

@@ -495,6 +495,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmdbench-terminal"
+version = "0.0.0"
+dependencies = [
+ "portable-pty",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-os",
+ "tauri-plugin-shell",
+ "time",
+ "tokio",
+]
+
+[[package]]
 name = "combine"
 version = "4.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4227,22 +4243,6 @@ dependencies = [
  "webview2-com",
  "windows",
  "wry",
-]
-
-[[package]]
-name = "tauri-terminal"
-version = "0.0.0"
-dependencies = [
- "portable-pty",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-os",
- "tauri-plugin-shell",
- "time",
- "tokio",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 {
-  "name": "@pc-macros-manager/tauri-terminal",
+  "name": "cmdbench-terminal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
