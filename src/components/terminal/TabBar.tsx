@@ -377,9 +377,7 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
                 return (
                   <li key={group.id}>
                     <details>
-                      <summary 
-                        style={{ color: group.color }}
-                      >
+                      <summary>
                         {group.name}
                       </summary>
                       <ul>

@@ -7,7 +7,7 @@ interface GroupModalProps {
   group: Partial<CommandGroup> | null;
   parentId?: string;
   allGroups: CommandGroup[];
-  onSave: (data: { name: string; description?: string; color?: string; parentId?: string }) => void;
+  onSave: (data: { name: string; description?: string; parentId?: string }) => void;
   onClose: () => void;
 }
 
@@ -22,14 +22,12 @@ export const GroupModal: React.FC<GroupModalProps> = ({
   const { t } = useTranslation();
   const [name, setName] = useState(group?.name || '');
   const [description, setDescription] = useState(group?.description || '');
-  const [color, setColor] = useState(group?.color || '#6b7280');
   const [selectedParentId, setSelectedParentId] = useState<string>(parentId || group?.parentId || '');
 
   useEffect(() => {
     if (isOpen) {
       setName(group?.name || '');
       setDescription(group?.description || '');
-      setColor(group?.color || '#6b7280');
       setSelectedParentId(parentId || group?.parentId || '');
     }
   }, [isOpen, group, parentId]);
@@ -70,7 +68,6 @@ export const GroupModal: React.FC<GroupModalProps> = ({
     onSave({
       name: name.trim(),
       description: description.trim() || undefined,
-      color,
       parentId: selectedParentId || undefined,
     });
     onClose();
@@ -129,27 +126,6 @@ export const GroupModal: React.FC<GroupModalProps> = ({
               placeholder={t('commandGroups.descriptionPlaceholder')}
               rows={2}
             />
-          </div>
-
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">{t('commandGroups.color')}</span>
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="color"
-                className="w-12 h-10 rounded cursor-pointer border-0"
-                value={color}
-                onChange={e => setColor(e.target.value)}
-              />
-              <input
-                type="text"
-                className="input input-bordered flex-1"
-                value={color}
-                onChange={e => setColor(e.target.value)}
-                pattern="^#[0-9A-Fa-f]{6}$"
-              />
-            </div>
           </div>
 
           <div className="modal-action">

@@ -45,7 +45,6 @@
     "namePlaceholder": "Введите название группы",
     "description": "Описание",
     "descriptionPlaceholder": "Введите описание группы",
-    "color": "Цвет",
     "parentGroup": "Родительская группа",
     "noParent": "Без родителя (корневой уровень)",
     "noGroups": "Группы еще не созданы",

@@ -83,11 +83,11 @@ const CommandsSettings: React.FC = () => {
     }
   }, [groups]);
 
-  const handleSaveGroup = useCallback((data: { name: string; description?: string; color?: string; parentId?: string }) => {
+  const handleSaveGroup = useCallback((data: { name: string; description?: string; parentId?: string }) => {
     if (editingGroup?.id) {
       updateGroup(editingGroup.id, data);
     } else {
-      addGroup(data.name, data.parentId, data.color, data.description);
+      addGroup(data.name, data.parentId, undefined, data.description);
     }
   }, [editingGroup, updateGroup, addGroup]);
 

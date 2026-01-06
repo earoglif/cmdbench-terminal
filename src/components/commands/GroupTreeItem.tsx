@@ -61,11 +61,6 @@ export const GroupTreeItem: React.FC<GroupTreeItemProps> = ({
           </svg>
         </button>
 
-        <div
-          className="w-4 h-4 rounded-sm flex-shrink-0"
-          style={{ backgroundColor: group.color || '#6b7280' }}
-        />
-
         <span className="flex-1 font-medium truncate">
           {group.name}
         </span>

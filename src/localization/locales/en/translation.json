@@ -45,7 +45,6 @@
     "namePlaceholder": "Enter group name",
     "description": "Description",
     "descriptionPlaceholder": "Enter group description",
-    "color": "Color",
     "parentGroup": "Parent Group",
     "noParent": "No parent (root level)",
     "noGroups": "No groups created yet",
