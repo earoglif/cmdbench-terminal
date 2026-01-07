@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MdModeEdit, MdStop } from "react-icons/md";
 import { useShortcutsStore, KeyboardShortcut } from '@/stores/shortcutsStore';
 import { useCommandsStore } from '@/stores/commandsStore';
 
@@ -156,7 +157,7 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
                   className={`btn ${isRecording ? 'btn-error' : 'btn-primary'}`}
                   onClick={() => setIsRecording(!isRecording)}
                 >
-                  {isRecording ? t('shortcuts.stopRecording') : t('shortcuts.recordKeys')}
+                  {isRecording ? <MdStop className="w-4 h-4" title={t('shortcuts.stopRecording')} /> : <MdModeEdit className="w-4 h-4" title={t('shortcuts.recordKeys')} />}
                 </button>
               </div>
               {isRecording && (

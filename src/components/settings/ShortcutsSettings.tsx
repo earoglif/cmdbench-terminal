@@ -99,90 +99,34 @@ const ShortcutsSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">{t('shortcuts.title')}</h2>
-      </div>
-
-      {/* System Shortcuts */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3">{t('shortcuts.systemShortcuts')}</h3>
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr>
-                <th>{t('shortcuts.keys')}</th>
-                <th>{t('shortcuts.action')}</th>
-                <th>{t('shortcuts.description')}</th>
-                <th className="w-24"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {systemShortcuts.map((shortcut) => (
-                <tr key={shortcut.id}>
-                  <td>
-                    <kbd className="kbd">{shortcut.keys}</kbd>
-                  </td>
-                  <td>{t(`shortcuts.actions.${shortcut.action}`)}</td>
-                  <td className="text-sm text-base-content/70">
-                    {shortcut.description || t(`shortcuts.actions.${shortcut.action}`)}
-                  </td>
-                  <td>
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => handleEditShortcut(shortcut)}
-                        title={t('shortcuts.edit')}
-                      >
-                        <FiEdit2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Command Shortcuts */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">{t('shortcuts.commandShortcuts')}</h3>
-          <button className="btn btn-primary btn-sm" onClick={handleAddShortcut}>
-            <FiPlus className="w-4 h-4" />
-            {t('shortcuts.addShortcut')}
-          </button>
+    <>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">{t('shortcuts.title')}</h2>
         </div>
 
-        {commandShortcuts.length === 0 ? (
-          <div className="text-center py-12 bg-base-200 rounded-lg">
-            <p className="text-base-content/60 mb-4">{t('shortcuts.noCommandShortcuts')}</p>
-            <button className="btn btn-primary" onClick={handleAddShortcut}>
-              <FiPlus className="w-4 h-4" />
-              {t('shortcuts.createFirstShortcut')}
-            </button>
-          </div>
-        ) : (
+        {/* System Shortcuts */}
+        <div>
+          <h3 className="text-lg font-semibold mb-3">{t('shortcuts.systemShortcuts')}</h3>
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
                   <th>{t('shortcuts.keys')}</th>
-                  <th>{t('shortcuts.command')}</th>
+                  <th>{t('shortcuts.action')}</th>
                   <th>{t('shortcuts.description')}</th>
                   <th className="w-24"></th>
                 </tr>
               </thead>
               <tbody>
-                {commandShortcuts.map((shortcut) => (
+                {systemShortcuts.map((shortcut) => (
                   <tr key={shortcut.id}>
                     <td>
                       <kbd className="kbd">{shortcut.keys}</kbd>
                     </td>
-                    <td>{getCommandName(shortcut.commandId)}</td>
+                    <td>{t(`shortcuts.actions.${shortcut.action}`)}</td>
                     <td className="text-sm text-base-content/70">
-                      {shortcut.description || ''}
+                      {shortcut.description || t(`shortcuts.actions.${shortcut.action}`)}
                     </td>
                     <td>
                       <div className="flex gap-2 justify-end">
@@ -193,13 +137,6 @@ const ShortcutsSettings: React.FC = () => {
                         >
                           <FiEdit2 className="w-4 h-4" />
                         </button>
-                        <button
-                          className="btn btn-ghost btn-sm text-error"
-                          onClick={() => handleDeleteClick(shortcut.id)}
-                          title={t('shortcuts.delete')}
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -207,7 +144,72 @@ const ShortcutsSettings: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+
+        {/* Command Shortcuts */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">{t('shortcuts.commandShortcuts')}</h3>
+            <button className="btn btn-primary btn-sm" onClick={handleAddShortcut}>
+              <FiPlus className="w-4 h-4" />
+              {t('shortcuts.addShortcut')}
+            </button>
+          </div>
+
+          {commandShortcuts.length === 0 ? (
+            <div className="text-center py-12 bg-base-200 rounded-lg">
+              <p className="text-base-content/60 mb-4">{t('shortcuts.noCommandShortcuts')}</p>
+              <button className="btn btn-primary" onClick={handleAddShortcut}>
+                <FiPlus className="w-4 h-4" />
+                {t('shortcuts.createFirstShortcut')}
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>{t('shortcuts.keys')}</th>
+                    <th>{t('shortcuts.command')}</th>
+                    <th>{t('shortcuts.description')}</th>
+                    <th className="w-24"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commandShortcuts.map((shortcut) => (
+                    <tr key={shortcut.id}>
+                      <td>
+                        <kbd className="kbd">{shortcut.keys}</kbd>
+                      </td>
+                      <td>{getCommandName(shortcut.commandId)}</td>
+                      <td className="text-sm text-base-content/70">
+                        {shortcut.description || ''}
+                      </td>
+                      <td>
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleEditShortcut(shortcut)}
+                            title={t('shortcuts.edit')}
+                          >
+                            <FiEdit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm text-error"
+                            onClick={() => handleDeleteClick(shortcut.id)}
+                            title={t('shortcuts.delete')}
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       <ShortcutEditorModal
@@ -222,7 +224,7 @@ const ShortcutsSettings: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}
       />
-    </div>
+    </>
   );
 };
 

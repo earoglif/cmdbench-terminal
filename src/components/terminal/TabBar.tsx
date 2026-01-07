@@ -361,7 +361,7 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
         <div tabIndex={0} role="button" className="btn btn-ghost btn-sm px-2">
           <MenuIcon className="w-4 h-4" />
         </div>
-        <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 max-h-[80vh] overflow-y-auto" style={{ gridTemplateColumns: '1fr', display: 'grid' }}>
+        <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52 max-h-[80vh] overflow-y-auto" style={{ gridTemplateColumns: '1fr', display: 'grid' }}>
           <li><a onClick={handleSettingsClick}>{t('menu.settings')}</a></li>
           
           {(() => {

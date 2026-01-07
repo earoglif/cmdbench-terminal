@@ -9,7 +9,7 @@ import {
   CommandItem,
   DeleteConfirmModal,
 } from '@/components/commands';
-import { IoDocumentText, IoAdd, IoFolderOpen, IoDownload, IoCloudUpload } from 'react-icons/io5';
+import { IoDocumentText, IoAdd, IoFolderOpen, IoDownload, IoCloudUpload, IoSave } from 'react-icons/io5';
 import { validateExportData, createExportData } from '@/utils/dataValidation';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
@@ -241,7 +241,7 @@ const CommandsSettings: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">{t('commands.title')}</h2>
         <div className="flex gap-2">
-          <button
+          {/* <button
             className="btn btn-outline btn-sm"
             onClick={handleExport}
             title={t('commands.exportData')}
@@ -256,7 +256,7 @@ const CommandsSettings: React.FC = () => {
           >
             <IoCloudUpload className="w-4 h-4 mr-1" />
             {t('commands.importData')}
-          </button>
+          </button> */}
           <button
             className="btn btn-outline btn-sm"
             onClick={() => handleAddCommand()}
@@ -271,6 +271,15 @@ const CommandsSettings: React.FC = () => {
             <IoAdd className="w-4 h-4 mr-1" />
             {t('commandGroups.addGroup')}
           </button>
+          <div className='dropdown dropdown-end'>
+            <div tabIndex={0} role="button" className='btn btn-outline btn-sm'>
+              <IoSave className="w-4 h-4 mr-1" />
+            </div>
+            <ul className='menu dropdown-content bg-base-200 rounded-box w-52 p-2 mt-3 shadow z-10'>
+              <li><a onClick={handleExport}>{t('commands.exportData')}</a></li>
+              <li><a onClick={handleImportClick}>{t('commands.importData')}</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
