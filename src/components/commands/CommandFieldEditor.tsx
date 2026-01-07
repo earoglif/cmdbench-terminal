@@ -2,6 +2,8 @@ import { useImperativeHandle, forwardRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { CommandField } from '@/stores/commandsStore';
+import { IoChevronForward } from 'react-icons/io5';
+import { FiFolder, FiTrash2 } from 'react-icons/fi';
 
 interface CommandFieldEditorProps {
   field: CommandField;
@@ -103,9 +105,7 @@ export const CommandFieldEditor = forwardRef<CommandFieldEditorRef, CommandField
               className="btn btn-sm btn-outline"
               onClick={handleFileSelect}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
+              <FiFolder className="w-4 h-4" />
             </button>
           </div>
         );
@@ -125,9 +125,7 @@ export const CommandFieldEditor = forwardRef<CommandFieldEditorRef, CommandField
               className="btn btn-sm btn-outline"
               onClick={handleDirectorySelect}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
+              <FiFolder className="w-4 h-4" />
             </button>
           </div>
         );
@@ -154,14 +152,9 @@ export const CommandFieldEditor = forwardRef<CommandFieldEditorRef, CommandField
         className="flex items-center gap-2 p-3 cursor-pointer hover:bg-base-200"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <svg
+        <IoChevronForward
           className={`w-4 h-4 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
+        />
         <span className="font-medium flex-1">
           {formData.name || t('commands.field.unnamed')}
         </span>
@@ -174,9 +167,7 @@ export const CommandFieldEditor = forwardRef<CommandFieldEditorRef, CommandField
           className="btn btn-ghost btn-xs text-error"
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
+          <FiTrash2 className="w-4 h-4" />
         </button>
       </div>
 

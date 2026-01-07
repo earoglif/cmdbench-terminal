@@ -4,6 +4,8 @@ import { MentionsInput, Mention, OnChangeHandlerFunc } from 'react-mentions';
 import { Command, CommandField, CreateCommandData } from '@/stores/commandsStore';
 import { CommandGroup } from '@/stores/commandGroupsStore';
 import { CommandFieldEditor, CommandFieldEditorRef } from './CommandFieldEditor';
+import { IoAdd } from 'react-icons/io5';
+import { TbListDetails } from 'react-icons/tb';
 
 interface CommandModalProps {
   isOpen: boolean;
@@ -258,18 +260,14 @@ export const CommandModal: React.FC<CommandModalProps> = ({
                     className="btn btn-sm btn-primary"
                     onClick={handleAddField}
                   >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                    <IoAdd className="w-4 h-4 mr-1" />
                     {t('commands.addField')}
                   </button>
                 </div>
 
                 {fields.length === 0 ? (
                   <div className="text-center py-8 text-base-content/50">
-                    <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
+                    <TbListDetails className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>{t('commands.noFields')}</p>
                   </div>
                 ) : (
