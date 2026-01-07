@@ -12,7 +12,7 @@ interface UseKeyboardShortcutsOptions {
 
 export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions) => {
   const { tabs, activeTabId, addTab, removeTab, setActiveTab } = useTerminalStore();
-  const { shortcuts } = useShortcutsStore();
+  const { shortcuts, isEditorModalOpen } = useShortcutsStore();
   const { commands } = useCommandsStore();
   const { runCommand, onOpenDialog } = options;
 
@@ -42,6 +42,11 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions) => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Skip if ShortcutEditorModal is open
+      if (isEditorModalOpen) {
+        return;
+      }
+
       const pressedKeys = normalizeEventKeys(event);
       
       // Find matching shortcut
@@ -91,5 +96,5 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions) => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [tabs, activeTabId, addTab, removeTab, setActiveTab, shortcuts, commands, runCommand]);
+  }, [tabs, activeTabId, addTab, removeTab, setActiveTab, shortcuts, commands, runCommand, isEditorModalOpen]);
 };

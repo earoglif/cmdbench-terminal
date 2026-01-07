@@ -19,13 +19,14 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { commands } = useCommandsStore();
-  const { getShortcutByKeys } = useShortcutsStore();
+  const { getShortcutByKeys, setEditorModalOpen } = useShortcutsStore();
   
   const [keys, setKeys] = useState('');
   const [commandId, setCommandId] = useState('');
   const [description, setDescription] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState('');
+  const [duplicateWarning, setDuplicateWarning] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -39,9 +40,13 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
         setDescription('');
       }
       setError('');
+      setDuplicateWarning('');
       setIsRecording(false);
+      setEditorModalOpen(true);
+    } else {
+      setEditorModalOpen(false);
     }
-  }, [isOpen, shortcut]);
+  }, [isOpen, shortcut, setEditorModalOpen]);
 
   const normalizeKeys = (event: KeyboardEvent): string => {
     const parts: string[] = [];
@@ -79,8 +84,16 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
       setKeys(normalizedKeys);
       setIsRecording(false);
       setError('');
+      
+      // Check for duplicate immediately
+      const existingShortcut = getShortcutByKeys(normalizedKeys);
+      if (existingShortcut && existingShortcut.id !== shortcut?.id) {
+        setDuplicateWarning(t('shortcuts.duplicateWarning'));
+      } else {
+        setDuplicateWarning('');
+      }
     }
-  }, [isRecording]);
+  }, [isRecording, getShortcutByKeys, shortcut?.id, t]);
 
   useEffect(() => {
     if (isRecording) {
@@ -107,6 +120,7 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
     const existingShortcut = getShortcutByKeys(keys);
     if (existingShortcut && existingShortcut.id !== shortcut?.id) {
       setError(t('shortcuts.keysInUse'));
+      setDuplicateWarning(t('shortcuts.duplicateWarning'));
       return;
     }
 
@@ -163,6 +177,11 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
               {isRecording && (
                 <label className="label">
                   <span className="label-text-alt text-warning">{t('shortcuts.recording')}</span>
+                </label>
+              )}
+              {duplicateWarning && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{duplicateWarning}</span>
                 </label>
               )}
             </div>
@@ -227,7 +246,11 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
             <button type="button" className="btn btn-ghost" onClick={onClose}>
               {t('shortcuts.cancel')}
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={!!duplicateWarning}
+            >
               {t('shortcuts.save')}
             </button>
           </div>

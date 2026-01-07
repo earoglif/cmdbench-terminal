@@ -14,6 +14,7 @@ export interface KeyboardShortcut {
 
 interface ShortcutsState {
   shortcuts: KeyboardShortcut[];
+  isEditorModalOpen: boolean;
 }
 
 interface ShortcutsActions {
@@ -24,6 +25,7 @@ interface ShortcutsActions {
   getShortcutsByCommandId: (commandId: string) => KeyboardShortcut[];
   deleteShortcutsByCommandId: (commandId: string) => void;
   initializeDefaultShortcuts: () => void;
+  setEditorModalOpen: (isOpen: boolean) => void;
 }
 
 type ShortcutsStore = ShortcutsState & ShortcutsActions;
@@ -59,6 +61,7 @@ export const useShortcutsStore = create<ShortcutsStore>()(
   persist(
     (set, get) => ({
       shortcuts: [],
+      isEditorModalOpen: false,
 
       initializeDefaultShortcuts: () => {
         const currentShortcuts = get().shortcuts;
@@ -135,6 +138,10 @@ export const useShortcutsStore = create<ShortcutsStore>()(
         set((state) => ({
           shortcuts: state.shortcuts.filter((s) => s.commandId !== commandId),
         }));
+      },
+
+      setEditorModalOpen: (isOpen) => {
+        set({ isEditorModalOpen: isOpen });
       },
     }),
     {
