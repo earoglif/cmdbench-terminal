@@ -47,6 +47,8 @@ interface CommandsActions {
   getCommandsByGroup: (groupId?: string) => Command[];
   getCommandById: (id: string) => Command | undefined;
   clearError: () => void;
+  exportData: () => Command[];
+  importData: (commands: Command[]) => void;
 }
 
 type CommandsStore = CommandsState & CommandsActions;
@@ -111,6 +113,14 @@ export const useCommandsStore = create<CommandsStore>()(
 
       clearError: () => {
         // No-op, kept for compatibility
+      },
+
+      exportData: () => {
+        return get().commands;
+      },
+
+      importData: (commands) => {
+        set({ commands });
       },
     }),
     {

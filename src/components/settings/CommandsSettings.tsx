@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCommandGroupsStore, CommandGroup } from '@/stores/commandGroupsStore';
 import { useCommandsStore, Command, CreateCommandData } from '@/stores/commandsStore';
@@ -9,7 +9,10 @@ import {
   CommandItem,
   DeleteConfirmModal,
 } from '@/components/commands';
-import { IoDocumentText, IoAdd, IoFolderOpen } from 'react-icons/io5';
+import { IoDocumentText, IoAdd, IoFolderOpen, IoDownload, IoCloudUpload } from 'react-icons/io5';
+import { validateExportData, createExportData } from '@/utils/dataValidation';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 
 const CommandsSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -19,6 +22,8 @@ const CommandsSettings: React.FC = () => {
     addGroup,
     updateGroup,
     deleteGroup: deleteGroupFromStore,
+    exportData: exportGroups,
+    importData: importGroups,
   } = useCommandGroupsStore();
 
   const {
@@ -28,7 +33,19 @@ const CommandsSettings: React.FC = () => {
     updateCommand,
     deleteCommand: deleteCommandFromStore,
     toggleFavorite,
+    exportData: exportCommands,
+    importData: importCommands,
   } = useCommandsStore();
+
+  // File input ref for import
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Toast state for notifications
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
 
   // Group modal state
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -130,11 +147,116 @@ const CommandsSettings: React.FC = () => {
     }
   }, [deleteConfirm, deleteGroupFromStore, deleteCommandFromStore]);
 
+  // Export/Import handlers
+  const handleExport = useCallback(async () => {
+    try {
+      const exportData = createExportData(exportCommands(), exportGroups());
+      const json = JSON.stringify(exportData, null, 2);
+      
+      const filePath = await save({
+        defaultPath: `commands-export-${new Date().toISOString().split('T')[0]}.json`,
+        filters: [{
+          name: 'JSON',
+          extensions: ['json']
+        }]
+      });
+      
+      if (filePath) {
+        await writeTextFile(filePath, json);
+        setToast({ show: true, message: t('commands.exportSuccess'), type: 'success' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      setToast({ show: true, message: t('commands.importError'), type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+    }
+  }, [exportCommands, exportGroups, t]);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const data = JSON.parse(text);
+        
+        if (!validateExportData(data)) {
+          setToast({ show: true, message: t('commands.importValidationError'), type: 'error' });
+          setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+          return;
+        }
+        
+        importCommands(data.commands);
+        importGroups(data.groups);
+        
+        setToast({ show: true, message: t('commands.importSuccess'), type: 'success' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+      } catch (error) {
+        console.error('Import error:', error);
+        setToast({ show: true, message: t('commands.importFileError'), type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+      }
+    };
+    
+    reader.onerror = () => {
+      setToast({ show: true, message: t('commands.importFileError'), type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset input so the same file can be loaded again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [importCommands, importGroups, t]);
+
   return (
     <div>
+      {/* Toast notification */}
+      {toast.show && (
+        <div className="toast toast-top toast-end z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleImport}
+        style={{ display: 'none' }}
+      />
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">{t('commands.title')}</h2>
         <div className="flex gap-2">
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={handleExport}
+            title={t('commands.exportData')}
+          >
+            <IoDownload className="w-4 h-4 mr-1" />
+            {t('commands.exportData')}
+          </button>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={handleImportClick}
+            title={t('commands.importData')}
+          >
+            <IoCloudUpload className="w-4 h-4 mr-1" />
+            {t('commands.importData')}
+          </button>
           <button
             className="btn btn-outline btn-sm"
             onClick={() => handleAddCommand()}

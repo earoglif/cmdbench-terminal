@@ -29,6 +29,8 @@ interface CommandGroupsActions {
   clearError: () => void;
   getChildGroups: (parentId?: string) => CommandGroup[];
   getGroupPath: (id: string) => CommandGroup[];
+  exportData: () => CommandGroup[];
+  importData: (groups: CommandGroup[]) => void;
 }
 
 type CommandGroupsStore = CommandGroupsState & CommandGroupsActions;
@@ -174,6 +176,14 @@ export const useCommandGroupsStore = create<CommandGroupsStore>()(
         }
         
         return path;
+      },
+
+      exportData: () => {
+        return get().groups;
+      },
+
+      importData: (groups) => {
+        set({ groups });
       },
     }),
     {
