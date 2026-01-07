@@ -5,8 +5,10 @@ import TabBar from '@components/terminal/TabBar';
 import { CommandExecuteDialog } from '@components/commands/CommandExecuteDialog';
 import { useMultipleTerminals } from '@hooks/useMultipleTerminals';
 import { useKeyboardShortcuts } from '@hooks/useKeyboardShortcuts';
+import { useCommandExecution } from '@hooks/useCommandExecution';
 import { useTerminalStore } from '@/stores/terminalStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { buildCommandString } from '@/utils/commandUtils';
 import { Command, CommandField } from '@/stores/commandsStore';
 
 interface ExecuteDialogState {
@@ -20,27 +22,31 @@ const App: React.FC = () => {
   const { containerRef, runCommand } = useMultipleTerminals();
   const { tabs, activeTabId } = useTerminalStore();
   const { language } = useSettingsStore();
-  useKeyboardShortcuts();
+
   const [executeDialog, setExecuteDialog] = useState<ExecuteDialogState>({
     isOpen: false,
     command: null,
     fieldsToShow: [],
   });
 
+  const handleOpenDialog = (command: Command) => {
+    setExecuteDialog({
+      isOpen: true,
+      command,
+      fieldsToShow: command.fields,
+    });
+  };
+
+  const { handleCommandClick } = useCommandExecution({ 
+    runCommand, 
+    onOpenDialog: handleOpenDialog 
+  });
+  
+  useKeyboardShortcuts({ runCommand, onOpenDialog: handleOpenDialog });
+
   useEffect(() => {
     i18n.changeLanguage(language);
   }, [language, i18n]);
-
-  const buildCommandString = (command: Command, fieldValues: { id: string; value: string }[]): string => {
-    let commandStr = command.command;
-    const fieldMap = new Map(fieldValues.map(f => [f.id, f.value]));
-    
-    commandStr = commandStr.replace(/#\[([^\]]+)\]\(([^)]+)\)/g, (_match, _display, id) => {
-      return fieldMap.get(id) || '';
-    });
-    
-    return commandStr;
-  };
 
   const executeCommand = (command: Command, fieldValues: { id: string; value: string }[]) => {
     const activeTab = tabs.find(tab => tab.id === activeTabId);
@@ -51,24 +57,6 @@ const App: React.FC = () => {
 
     const commandStr = buildCommandString(command, fieldValues);
     runCommand(commandStr);
-  };
-
-  const handleCommandClick = (command: Command) => {
-    const fieldsWithRequest = command.fields.filter(f => f.requestBeforeExecution);
-    
-    if (fieldsWithRequest.length > 0) {
-      setExecuteDialog({
-        isOpen: true,
-        command,
-        fieldsToShow: command.fields,
-      });
-    } else {
-      const fieldValues = command.fields.map(f => ({
-        id: f.id,
-        value: Array.isArray(f.value) ? f.value[0] || '' : (f.value || ''),
-      }));
-      executeCommand(command, fieldValues);
-    }
   };
 
   const handleExecuteDialogSubmit = (fieldValues: { id: string; value: string }[]) => {

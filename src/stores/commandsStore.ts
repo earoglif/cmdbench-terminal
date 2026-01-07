@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShortcutsStore } from './shortcutsStore';
 
 const generateId = () => crypto.randomUUID();
 
@@ -86,6 +87,10 @@ export const useCommandsStore = create<CommandsStore>()(
       },
 
       deleteCommand: (id) => {
+        // Delete associated shortcuts before deleting the command
+        const shortcutsStore = useShortcutsStore.getState();
+        shortcutsStore.deleteShortcutsByCommandId(id);
+        
         set(state => ({
           commands: state.commands.filter(c => c.id !== id),
         }));

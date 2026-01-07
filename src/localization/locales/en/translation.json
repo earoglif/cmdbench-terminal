@@ -134,5 +134,42 @@
     "maximize": "Maximize",
     "restore": "Restore",
     "close": "Close"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "systemShortcuts": "System Shortcuts",
+    "commandShortcuts": "Command Shortcuts",
+    "addShortcut": "Add Shortcut",
+    "editShortcut": "Edit Shortcut",
+    "deleteShortcut": "Delete Shortcut",
+    "keys": "Keys",
+    "action": "Action",
+    "command": "Command",
+    "description": "Description",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "selectCommand": "Select Command",
+    "noCommand": "No command selected",
+    "noCommandShortcuts": "No command shortcuts created yet",
+    "createFirstShortcut": "Create your first shortcut",
+    "keysPlaceholder": "Press keys combination (e.g., Ctrl+Shift+A)",
+    "descriptionPlaceholder": "Enter shortcut description",
+    "recordKeys": "Record Keys",
+    "stopRecording": "Stop Recording",
+    "recording": "Recording... Press keys combination",
+    "confirmDelete": "Confirm Deletion",
+    "confirmDeleteMessage": "Are you sure you want to delete this shortcut?",
+    "keysInUse": "This key combination is already in use",
+    "systemShortcutCannotDelete": "System shortcuts cannot be deleted",
+    "systemShortcutCanEdit": "You can edit the key combination for system shortcuts",
+    "actions": {
+      "newTab": "New terminal tab",
+      "closeTab": "Close current tab",
+      "nextTab": "Next tab",
+      "prevTab": "Previous tab",
+      "executeCommand": "Execute command"
+    }
   }
 }
