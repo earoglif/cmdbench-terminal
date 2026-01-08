@@ -9,7 +9,7 @@ import {
   CommandItem,
   DeleteConfirmModal,
 } from '@/components/commands';
-import { IoDocumentText, IoAdd, IoFolderOpen, IoDownload, IoCloudUpload, IoSave } from 'react-icons/io5';
+import { IoDocumentText, IoAdd, IoFolderOpen, IoSave } from 'react-icons/io5';
 import { validateExportData, createExportData } from '@/utils/dataValidation';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
