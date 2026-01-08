@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root:has(:is(.modal-open, .modal:target, .modal-toggle:checked + .modal, .modal[open])) {
+    overflow: hidden;
+    scrollbar-gutter: unset;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

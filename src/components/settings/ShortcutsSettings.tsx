@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShortcutsStore, KeyboardShortcut } from '@/stores/shortcutsStore';
 import { useCommandsStore } from '@/stores/commandsStore';
@@ -17,25 +17,50 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onCancel,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
+
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onCancel();
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    handleCloseModal();
+  };
 
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box max-w-sm">
         <h3 className="font-bold text-lg mb-4">{t('shortcuts.confirmDelete')}</h3>
         <p className="mb-6">{t('shortcuts.confirmDeleteMessage')}</p>
         <div className="modal-action">
-          <button className="btn btn-ghost" onClick={onCancel}>
+          <button className="btn btn-ghost" onClick={handleCloseModal}>
             {t('shortcuts.cancel')}
           </button>
-          <button className="btn btn-error" onClick={onConfirm}>
+          <button className="btn btn-error" onClick={handleConfirm}>
             {t('shortcuts.delete')}
           </button>
         </div>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onCancel} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };
 

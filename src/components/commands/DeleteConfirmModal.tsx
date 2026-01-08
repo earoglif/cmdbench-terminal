@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface DeleteConfirmModalProps {
@@ -17,31 +17,53 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
+
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    handleCloseModal();
+  };
 
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-4">{title}</h3>
         <p className="py-2">{message}</p>
         <div className="modal-action">
-          <button className="btn btn-ghost" onClick={onClose}>
+          <button className="btn btn-ghost" onClick={handleCloseModal}>
             {t('commandGroups.cancel')}
           </button>
           <button
             className="btn btn-error"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={handleConfirm}
           >
             {t('commandGroups.delete')}
           </button>
         </div>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onClose} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };
 

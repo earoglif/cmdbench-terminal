@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MdModeEdit, MdStop } from "react-icons/md";
 import { useShortcutsStore, KeyboardShortcut } from '@/stores/shortcutsStore';
@@ -20,6 +20,7 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   const { t } = useTranslation();
   const { commands } = useCommandsStore();
   const { getShortcutByKeys, setEditorModalOpen } = useShortcutsStore();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   
   const [keys, setKeys] = useState('');
   const [commandId, setCommandId] = useState('');
@@ -27,6 +28,14 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState('');
+
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -103,6 +112,13 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
     return undefined;
   }, [isRecording, handleKeyDown]);
 
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onClose();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -133,13 +149,15 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
     };
 
     onSave(data);
-    onClose();
+    handleCloseModal();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box max-w-lg">
         <h3 className="font-bold text-lg mb-4">
           {shortcut ? t('shortcuts.editShortcut') : t('shortcuts.addShortcut')}
@@ -243,7 +261,7 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
           </div>
 
           <div className="modal-action mt-6">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
+            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
               {t('shortcuts.cancel')}
             </button>
             <button 
@@ -256,8 +274,10 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
           </div>
         </form>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onClose} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { CommandField } from '@/stores/commandsStore';
@@ -25,6 +25,7 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
   onCancel,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     fields.forEach(f => {
@@ -57,6 +58,21 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
     } catch (error) {
       console.error('Error selecting directory:', error);
     }
+  };
+
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
+
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onCancel();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -169,10 +185,12 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box max-w-lg">
         <h3 className="font-bold text-lg mb-4">{commandName}</h3>
         
@@ -195,7 +213,7 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
           </div>
 
           <div className="modal-action mt-6">
-            <button type="button" className="btn btn-ghost" onClick={onCancel}>
+            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
               {t('commandExecute.cancel')}
             </button>
             <button
@@ -208,7 +226,9 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
           </div>
         </form>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onCancel} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };

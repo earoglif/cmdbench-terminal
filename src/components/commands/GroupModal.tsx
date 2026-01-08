@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommandGroup } from '@/stores/commandGroupsStore';
 
@@ -20,9 +20,18 @@ export const GroupModal: React.FC<GroupModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState(group?.name || '');
   const [description, setDescription] = useState(group?.description || '');
   const [selectedParentId, setSelectedParentId] = useState<string>(parentId || group?.parentId || '');
+
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -62,6 +71,13 @@ export const GroupModal: React.FC<GroupModalProps> = ({
     return path.join(' / ');
   };
 
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onClose();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -70,13 +86,15 @@ export const GroupModal: React.FC<GroupModalProps> = ({
       description: description.trim() || undefined,
       parentId: selectedParentId || undefined,
     });
-    onClose();
+    handleCloseModal();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-4">
           {group?.id ? t('commandGroups.editGroup') : t('commandGroups.createGroup')}
@@ -129,7 +147,7 @@ export const GroupModal: React.FC<GroupModalProps> = ({
           </div>
 
           <div className="modal-action">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
+            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
               {t('commandGroups.cancel')}
             </button>
             <button type="submit" className="btn btn-primary" disabled={!name.trim()}>
@@ -138,8 +156,10 @@ export const GroupModal: React.FC<GroupModalProps> = ({
           </div>
         </form>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onClose} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };
 

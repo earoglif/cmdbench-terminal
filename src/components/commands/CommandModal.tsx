@@ -27,6 +27,7 @@ export const CommandModal: React.FC<CommandModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -42,6 +43,14 @@ export const CommandModal: React.FC<CommandModalProps> = ({
   const handleCommandChange: OnChangeHandlerFunc = (event) => {
     setCommandText(event.target.value);
   };
+
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      dialogRef.current.showModal();
+    } else if (!isOpen && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -113,6 +122,13 @@ export const CommandModal: React.FC<CommandModalProps> = ({
     return path.join(' / ');
   };
 
+  const handleCloseModal = () => {
+    if (dialogRef.current) {
+      dialogRef.current.close();
+    }
+    onClose();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !commandText.trim()) return;
@@ -131,13 +147,15 @@ export const CommandModal: React.FC<CommandModalProps> = ({
     };
 
     onSave(data, command?.id);
-    onClose();
+    handleCloseModal();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      onCancel={handleCloseModal}
+    >
       <div className="modal-box max-w-2xl max-h-[90vh] flex flex-col">
         <h3 className="font-bold text-lg mb-4">
           {command ? t('commands.editCommand') : t('commands.createCommand')}
@@ -329,7 +347,7 @@ export const CommandModal: React.FC<CommandModalProps> = ({
           </div>
 
           <div className="modal-action mt-4 pt-4 border-t border-base-300">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
+            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
               {t('commands.cancel')}
             </button>
             <button
@@ -342,8 +360,10 @@ export const CommandModal: React.FC<CommandModalProps> = ({
           </div>
         </form>
       </div>
-      <div className="modal-backdrop bg-black/50" onClick={onClose} />
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
+        <button type="button">close</button>
+      </form>
+    </dialog>
   );
 };
 
