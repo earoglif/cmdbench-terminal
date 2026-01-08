@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore, type Language } from '@/stores/settingsStore';
-import { check, type Update, type DownloadEvent } from '@tauri-apps/plugin-updater';
+import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 import { getVersion } from '@tauri-apps/api/app';
 
 type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' | 'upToDate';
