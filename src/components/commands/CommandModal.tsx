@@ -186,7 +186,7 @@ export const CommandModal: React.FC<CommandModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-hidden">
             {activeTab === 'basic' && (
               <div className="space-y-4 p-1">
                 <div className="form-control">
