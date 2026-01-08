@@ -1,6 +1,6 @@
 {
   "productName": "cmdbench-terminal",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "identifier": "com.cmdbench-terminal.dev",
   "build": {
     "beforeDevCommand": "npm run dev:vite",
@@ -27,6 +27,16 @@
     ],
     "macOS": {
       "minimumSystemVersion": "10.13"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/earoglif/cmdbench-terminal/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhGNkFCMkQ3QTVCNDRFMjEKUldRaFRyU2wxN0pxajg0Q0xhaldVbDVrR1dWd0tNYk9FTW52OG43VCtmZFY1azN6aHlWd3lRSm8K"
     }
   }
 }

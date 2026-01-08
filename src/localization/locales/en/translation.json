@@ -123,7 +123,17 @@
   "applicationSettings": {
     "title": "Application Settings",
     "language": "Interface Language",
-    "languageDescription": "Select the application interface language"
+    "languageDescription": "Select the application interface language",
+    "version": "Version",
+    "currentVersion": "Current version",
+    "checkForUpdates": "Check for Updates",
+    "installUpdate": "Install Update",
+    "upToDate": "Application is up to date",
+    "updateAvailable": "New version available",
+    "downloading": "Downloading update...",
+    "installing": "Installing update...",
+    "updateError": "Error checking for updates",
+    "restartRequired": "Restart required to complete update"
   },
   "appearanceSettings": {
     "title": "Appearance Settings",

@@ -123,7 +123,17 @@
   "applicationSettings": {
     "title": "Настройки приложения",
     "language": "Язык интерфейса",
-    "languageDescription": "Выберите язык интерфейса приложения"
+    "languageDescription": "Выберите язык интерфейса приложения",
+    "version": "Версия",
+    "currentVersion": "Текущая версия",
+    "checkForUpdates": "Проверить обновления",
+    "installUpdate": "Установить обновление",
+    "upToDate": "Приложение обновлено",
+    "updateAvailable": "Доступна новая версия",
+    "downloading": "Загрузка обновления...",
+    "installing": "Установка обновления...",
+    "updateError": "Ошибка проверки обновлений",
+    "restartRequired": "Требуется перезапуск для завершения обновления"
   },
   "appearanceSettings": {
     "title": "Настройки внешнего вида",
