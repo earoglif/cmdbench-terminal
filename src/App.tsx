@@ -21,7 +21,7 @@ const App: React.FC = () => {
   const { i18n } = useTranslation();
   const { containerRef, runCommand } = useMultipleTerminals();
   const { tabs, activeTabId } = useTerminalStore();
-  const { language } = useSettingsStore();
+  const { language, theme } = useSettingsStore();
 
   const [executeDialog, setExecuteDialog] = useState<ExecuteDialogState>({
     isOpen: false,
@@ -71,7 +71,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-base-100" data-theme="dark">
+    <div className="h-screen flex flex-col bg-base-100" data-theme={theme}>
       <TabBar onCommandClick={handleCommandClick} />
       <MultipleTerminals ref={containerRef} />
       {executeDialog.command && (

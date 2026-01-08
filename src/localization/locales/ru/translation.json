@@ -125,6 +125,21 @@
     "language": "Язык интерфейса",
     "languageDescription": "Выберите язык интерфейса приложения"
   },
+  "appearanceSettings": {
+    "title": "Настройки внешнего вида",
+    "theme": "Тема",
+    "themeDescription": "Выберите цветовую схему приложения",
+    "themeDark": "Тёмная",
+    "themeLight": "Светлая",
+    "terminalFont": "Шрифт терминала",
+    "terminalFontDescription": "Настройка шрифта терминала",
+    "fontFamily": "Шрифт",
+    "fontFamilyDescription": "Шрифт, используемый в терминале",
+    "fontSize": "Размер шрифта",
+    "fontSizeDescription": "Размер шрифта в пикселях",
+    "lineHeight": "Межстрочный интервал",
+    "lineHeightDescription": "Расстояние между строками"
+  },
   "commandExecute": {
     "execute": "Выполнить",
     "cancel": "Отмена"

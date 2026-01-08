@@ -6,7 +6,7 @@ interface TerminalProps {
 
 const Terminal = forwardRef<HTMLDivElement, TerminalProps>(({ className = '' }, ref) => {
   return (
-    <div className={`flex-1 overflow-hidden bg-gray-800 ${className}`}>
+    <div className={`flex-1 overflow-hidden ${className}`}>
       <div ref={ref} className="h-full w-full" />
     </div>
   );

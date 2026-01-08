@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useTerminalStore } from '@/stores/terminalStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface TerminalInstanceExtended {
   id: string;
@@ -28,6 +29,7 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number):
 
 export const useMultipleTerminals = () => {
   const { tabs, activeTabId, removeTab, updateTabTitleFromPath } = useTerminalStore();
+  const { terminalFont, theme } = useSettingsStore();
   const terminalsRef = useRef<Map<string, TerminalInstanceExtended>>(new Map());
   const ptyToTabMapRef = useRef<Map<string, string>>(new Map()); // Map ptyId -> tabId
   const tabsRef = useRef(tabs); // Ref для актуального количества вкладок
@@ -35,6 +37,65 @@ export const useMultipleTerminals = () => {
   const [isReady, setIsReady] = useState(false);
   const activeReadLoopsRef = useRef<Set<string>>(new Set()); // Активные циклы чтения
   
+  // Обновление шрифта для всех активных терминалов при изменении настроек
+  useEffect(() => {
+    terminalsRef.current.forEach((instance) => {
+      if (instance.terminal) {
+        instance.terminal.options.fontFamily = terminalFont.family;
+        instance.terminal.options.fontSize = terminalFont.size;
+        instance.terminal.options.lineHeight = terminalFont.lineHeight;
+        
+        // Перерасчет размеров после изменения шрифта
+        if (instance.fitAddon && instance.container.style.visibility === 'visible') {
+          try {
+            const prevRows = instance.terminal.rows;
+            const prevCols = instance.terminal.cols;
+            
+            instance.fitAddon.fit();
+            
+            const newRows = instance.terminal.rows;
+            const newCols = instance.terminal.cols;
+            
+            if (prevRows !== newRows || prevCols !== newCols) {
+              invoke("async_resize_pty", {
+                ptyId: instance.ptyId,
+                rows: newRows,
+                cols: newCols,
+              }).catch(console.error);
+            }
+          } catch (error) {
+            console.error("Error refitting terminal after font change:", error);
+          }
+        }
+      }
+    });
+  }, [terminalFont]);
+
+  // Обновление темы терминалов при изменении темы приложения
+  useEffect(() => {
+    const terminalTheme = theme === 'dark' 
+      ? {
+          background: '#1d232a', // DaisyUI dark theme base-100
+          foreground: '#a6adba',
+          cursor: '#a6adba',
+          cursorAccent: '#1d232a',
+          selectionBackground: 'rgba(166, 173, 186, 0.3)',
+        }
+      : {
+          background: '#ffffff', // DaisyUI light theme base-100
+          foreground: '#1f2937',
+          cursor: '#1f2937',
+          cursorAccent: '#ffffff',
+          selectionBackground: 'rgba(0, 0, 0, 0.2)',
+        };
+
+    terminalsRef.current.forEach((instance) => {
+      if (instance.terminal) {
+        instance.terminal.options.theme = terminalTheme;
+      }
+    });
+  }, [theme]);
+
   // Обновляем ref при изменении tabs
   useEffect(() => {
     tabsRef.current = tabs;
@@ -85,11 +146,29 @@ export const useMultipleTerminals = () => {
     }
 
     const fitAddon = new FitAddon();
+    
+    // Определяем тему терминала в зависимости от темы приложения
+    const terminalTheme = theme === 'dark'
+      ? {
+          background: '#1d232a', // DaisyUI dark theme base-100
+          foreground: '#a6adba',
+          cursor: '#a6adba',
+          cursorAccent: '#1d232a',
+          selectionBackground: 'rgba(166, 173, 186, 0.3)',
+        }
+      : {
+          background: '#ffffff', // DaisyUI light theme base-100
+          foreground: '#1f2937',
+          cursor: '#1f2937',
+          cursorAccent: '#ffffff',
+          selectionBackground: 'rgba(0, 0, 0, 0.2)',
+        };
+    
     const terminal = new Terminal({
-      theme: {
-        background: '#1f2937',
-        foreground: '#f9fafb',
-      }
+      fontFamily: terminalFont.family,
+      fontSize: terminalFont.size,
+      lineHeight: terminalFont.lineHeight,
+      theme: terminalTheme,
     });
     
     terminal.loadAddon(fitAddon);
@@ -151,7 +230,7 @@ export const useMultipleTerminals = () => {
       });
 
     return instance;
-  }, [startReadLoop, updateTabTitleFromPath]);
+  }, [startReadLoop, updateTabTitleFromPath, terminalFont, theme]);
 
   // Получение или создание терминала для таба
   const getOrCreateTerminal = useCallback(async (tabId: string, shellPath?: string): Promise<TerminalInstanceExtended | null> => {

@@ -125,6 +125,21 @@
     "language": "Interface Language",
     "languageDescription": "Select the application interface language"
   },
+  "appearanceSettings": {
+    "title": "Appearance Settings",
+    "theme": "Theme",
+    "themeDescription": "Choose the color scheme for the application",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "terminalFont": "Terminal Font",
+    "terminalFontDescription": "Configure terminal font settings",
+    "fontFamily": "Font Family",
+    "fontFamilyDescription": "Font used in terminal",
+    "fontSize": "Font Size",
+    "fontSizeDescription": "Font size in pixels",
+    "lineHeight": "Line Height",
+    "lineHeightDescription": "Spacing between lines"
+  },
   "commandExecute": {
     "execute": "Execute",
     "cancel": "Cancel"
