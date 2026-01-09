@@ -1,6 +1,6 @@
 {
   "productName": "cmdbench-terminal",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.6",
   "identifier": "com.cmdbench-terminal.dev",
   "build": {
     "beforeDevCommand": "npm run dev:vite",
@@ -12,7 +12,9 @@
     "windows": [],
     "security": {
       "csp": null,
-      "capabilities": ["default"]
+      "capabilities": [
+        "default"
+      ]
     }
   },
   "bundle": {
