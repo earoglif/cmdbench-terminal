@@ -97,6 +97,123 @@ jobs:
     needs: [create-release, build-tauri]
 
     steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Get version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+      
+      - name: Get release info
+        id: get-release
+        uses: actions/github-script@v7
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            const { data } = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: process.env.release_id
+            })
+            return data
+      
+      - name: Create latest.json
+        run: |
+          cat > latest.json << EOF
+          {
+            "version": "v${{ env.PACKAGE_VERSION }}",
+            "notes": "See the assets to download and install this version.",
+            "pub_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "platforms": {
+              "darwin-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal_x64.app.tar.gz"
+              },
+              "darwin-aarch64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal_aarch64.app.tar.gz"
+              },
+              "linux-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal_amd64.AppImage.tar.gz"
+              },
+              "windows-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal_x64-setup.nsis.zip"
+              }
+            }
+          }
+          EOF
+      
+      - name: Extract signatures from release assets
+        uses: actions/github-script@v7
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const release_id = process.env.release_id;
+            
+            // Get release assets
+            const { data: assets } = await github.rest.repos.listReleaseAssets({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release_id
+            });
+            
+            // Read latest.json
+            let latestJson = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+            
+            // Extract signatures for each platform
+            for (const asset of assets) {
+              if (asset.name.endsWith('.sig')) {
+                const { data: sigContent } = await github.rest.repos.getReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  asset_id: asset.id,
+                  headers: {
+                    accept: 'application/octet-stream'
+                  }
+                });
+                
+                const signature = Buffer.from(sigContent).toString('utf8');
+                
+                // Map asset names to platforms
+                if (asset.name.includes('aarch64.app.tar.gz.sig')) {
+                  latestJson.platforms['darwin-aarch64'].signature = signature;
+                } else if (asset.name.includes('x64.app.tar.gz.sig')) {
+                  latestJson.platforms['darwin-x86_64'].signature = signature;
+                } else if (asset.name.includes('amd64.AppImage.tar.gz.sig')) {
+                  latestJson.platforms['linux-x86_64'].signature = signature;
+                } else if (asset.name.includes('x64-setup.nsis.zip.sig')) {
+                  latestJson.platforms['windows-x86_64'].signature = signature;
+                }
+              }
+            }
+            
+            // Write updated latest.json
+            fs.writeFileSync('latest.json', JSON.stringify(latestJson, null, 2));
+      
+      - name: Upload latest.json to release
+        uses: actions/github-script@v7
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: process.env.release_id,
+              name: 'latest.json',
+              data: fs.readFileSync('latest.json')
+            });
+      
       - name: Publish release
         id: publish-release
         uses: actions/github-script@v7
