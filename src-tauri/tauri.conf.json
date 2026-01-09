@@ -27,6 +27,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "wix": {
+        "enabled": false
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "install": true
+      }
+    },
     "macOS": {
       "minimumSystemVersion": "10.13"
     }
