@@ -1,7 +1,7 @@
 {
   "name": "cmdbench-terminal",
   "private": true,
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.6",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
@@ -9,6 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "set-version": "node scripts/set-version.js",
     "release": "npm version",
     "release:patch": "npm version patch && git push && git push --tags",
     "release:minor": "npm version minor && git push && git push --tags",
