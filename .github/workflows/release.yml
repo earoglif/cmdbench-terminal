@@ -4,283 +4,46 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 jobs:
-  create-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.result }}
-
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      
-      - name: Get version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-      
-      - name: Create release
-        id: create-release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `v${process.env.PACKAGE_VERSION}`,
-              name: `cmdbench-terminal v${process.env.PACKAGE_VERSION}`,
-              body: 'See the assets to download and install this version.',
-              draft: true,
-              prerelease: false
-            })
-            return data.id
-
-  build-tauri:
-    needs: create-release
+  release:
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            os_name: 'mac'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            os_name: 'mac'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            os_name: 'linux'
-          - platform: 'windows-latest'
-            args: '--bundles nsis'
-            os_name: 'win'
-
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+    
     runs-on: ${{ matrix.platform }}
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
+      
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
+      
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
+      
       - name: Install frontend dependencies
         run: npm install
-
+      
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
-      
-      - name: Rename release assets with OS identifier
-        uses: actions/github-script@v7
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-          os_name: ${{ matrix.os_name }}
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const release_id = process.env.release_id;
-            const os_name = process.env.os_name;
-            
-            // Get release assets
-            const { data: assets } = await github.rest.repos.listReleaseAssets({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release_id
-            });
-            
-            // Rename assets to include OS name
-            for (const asset of assets) {
-              let newName = asset.name;
-              
-              // Skip if already renamed or if it's latest.json
-              if (asset.name.includes(`-${os_name}-`) || asset.name === 'latest.json') {
-                continue;
-              }
-              
-              // Add OS identifier before the file extension or arch
-              if (os_name === 'mac') {
-                // For Mac: cmdbench-terminal_aarch64.app.tar.gz -> cmdbench-terminal-mac-aarch64.app.tar.gz
-                newName = asset.name.replace(/^(cmdbench-terminal)_/, `$1-${os_name}-`);
-              } else if (os_name === 'linux') {
-                // For Linux: cmdbench-terminal_amd64.AppImage.tar.gz -> cmdbench-terminal-linux-amd64.AppImage.tar.gz
-                newName = asset.name.replace(/^(cmdbench-terminal)_/, `$1-${os_name}-`);
-              } else if (os_name === 'win') {
-                // For Windows: cmdbench-terminal_x64-setup.nsis.zip -> cmdbench-terminal-win-x64-setup.nsis.zip
-                newName = asset.name.replace(/^(cmdbench-terminal)_/, `$1-${os_name}-`);
-              }
-              
-              // Only rename if the name changed
-              if (newName !== asset.name) {
-                await github.rest.repos.updateReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  asset_id: asset.id,
-                  name: newName
-                });
-                console.log(`Renamed ${asset.name} to ${newName}`);
-              }
-            }
-
-  publish-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs: [create-release, build-tauri]
-
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      
-      - name: Get version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-      
-      - name: Get release info
-        id: get-release
-        uses: actions/github-script@v7
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-        with:
-          script: |
-            const { data } = await github.rest.repos.getRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: process.env.release_id
-            })
-            return data
-      
-      - name: Create latest.json
-        run: |
-          cat > latest.json << EOF
-          {
-            "version": "v${{ env.PACKAGE_VERSION }}",
-            "notes": "See the assets to download and install this version.",
-            "pub_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-            "platforms": {
-              "darwin-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal-mac-x64.app.tar.gz"
-              },
-              "darwin-aarch64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal-mac-aarch64.app.tar.gz"
-              },
-              "linux-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal-linux-amd64.AppImage.tar.gz"
-              },
-              "windows-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v${{ env.PACKAGE_VERSION }}/cmdbench-terminal-win-x64-setup.nsis.zip"
-              }
-            }
-          }
-          EOF
-      
-      - name: Extract signatures from release assets
-        uses: actions/github-script@v7
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-        with:
-          script: |
-            const fs = require('fs');
-            const release_id = process.env.release_id;
-            
-            // Get release assets
-            const { data: assets } = await github.rest.repos.listReleaseAssets({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release_id
-            });
-            
-            // Read latest.json
-            let latestJson = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
-            
-            // Extract signatures for each platform
-            for (const asset of assets) {
-              if (asset.name.endsWith('.sig')) {
-                const { data: sigContent } = await github.rest.repos.getReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  asset_id: asset.id,
-                  headers: {
-                    accept: 'application/octet-stream'
-                  }
-                });
-                
-                const signature = Buffer.from(sigContent).toString('utf8');
-                
-                // Map asset names to platforms with new naming convention
-                if (asset.name.includes('mac-aarch64.app.tar.gz.sig')) {
-                  latestJson.platforms['darwin-aarch64'].signature = signature;
-                } else if (asset.name.includes('mac-x64.app.tar.gz.sig')) {
-                  latestJson.platforms['darwin-x86_64'].signature = signature;
-                } else if (asset.name.includes('linux-amd64.AppImage.tar.gz.sig')) {
-                  latestJson.platforms['linux-x86_64'].signature = signature;
-                } else if (asset.name.includes('win-x64-setup.nsis.zip.sig')) {
-                  latestJson.platforms['windows-x86_64'].signature = signature;
-                }
-              }
-            }
-            
-            // Write updated latest.json
-            fs.writeFileSync('latest.json', JSON.stringify(latestJson, null, 2));
-      
-      - name: Upload latest.json to release
-        uses: actions/github-script@v7
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-        with:
-          script: |
-            const fs = require('fs');
-            
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: process.env.release_id,
-              name: 'latest.json',
-              data: fs.readFileSync('latest.json')
-            });
-      
-      - name: Publish release
-        id: publish-release
-        uses: actions/github-script@v7
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-        with:
-          script: |
-            github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: process.env.release_id,
-              draft: false,
-              prerelease: false
-            })
+          tagName: v__VERSION__
+          releaseName: 'App v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: false
+          prerelease: false

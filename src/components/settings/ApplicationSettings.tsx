@@ -57,8 +57,11 @@ const ApplicationSettings: React.FC = () => {
 
       let downloaded = 0;
       let contentLength = 0;
+
+      console.log('installUpdate update:', update);
       
       await update.downloadAndInstall((event: DownloadEvent) => {
+        console.log('installUpdate event:', event);
         switch (event.event) {
           case 'Started':
             contentLength = event.data.contentLength || 0;
