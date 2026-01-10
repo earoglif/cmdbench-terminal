@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MdRefresh } from 'react-icons/md';
 import { useSettingsStore, type Language } from '@/stores/settingsStore';
 import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 import { getVersion } from '@tauri-apps/api/app';
@@ -129,50 +130,62 @@ const ApplicationSettings: React.FC = () => {
 
       <div className="divider"></div>
 
+      {/* Import the icon at the top of your file: import { MdRefresh } from 'react-icons/md'; */}
       <div className="space-y-4">
-        <div className="form-control w-full max-w-xs">
-          <label className="label">
-            <span className="label-text font-semibold">{t('applicationSettings.version')}</span>
-          </label>
-          <div className="text-base-content/80">
-            {t('applicationSettings.currentVersion')}: {currentVersion || '...'}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <span className="text-base-content/70 text-sm">
+            {t('applicationSettings.currentVersion')}: <span className="font-mono">{currentVersion || '...'}</span>
+          </span>
           <button
-            className="btn btn-primary w-full max-w-xs"
+            className="btn btn-ghost btn-sm px-2"
             onClick={checkForUpdates}
             disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+            aria-label={t('applicationSettings.checkForUpdates')}
+            title={t('applicationSettings.checkForUpdates')}
+            style={{ minWidth: 0 }}
           >
             {updateStatus === 'checking' ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : null}
-            {t('applicationSettings.checkForUpdates')}
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <MdRefresh className="w-5 h-5 text-base-content" />
+            )}
           </button>
-
-          {updateStatus === 'available' && (
-            <button
-              className="btn btn-success w-full max-w-xs"
-              onClick={installUpdate}
-            >
-              {t('applicationSettings.installUpdate')}
-            </button>
-          )}
-
-          {updateStatus === 'downloading' && (
-            <div className="flex items-center gap-2 text-base-content/80">
-              <span className="loading loading-spinner loading-sm"></span>
-              <span>{t('applicationSettings.downloading')}</span>
-            </div>
-          )}
-
-          {(updateStatus === 'upToDate' || updateStatus === 'error' || updateStatus === 'available' || updateStatus === 'ready') && (
-            <div className={`alert ${updateStatus === 'error' ? 'alert-error' : updateStatus === 'available' ? 'alert-info' : updateStatus === 'ready' ? 'alert-warning' : 'alert-success'} w-full max-w-xs`}>
-              <span className="text-sm">{getStatusMessage()}</span>
-            </div>
-          )}
         </div>
+        {updateStatus === 'available' && (
+          <button
+            className="btn btn-success btn-sm min-h-0 h-8 px-4"
+            onClick={installUpdate}
+          >
+            {t('applicationSettings.installUpdate')}
+          </button>
+        )}
+        {/* Colored text notifications */}
+        {updateStatus === 'downloading' && (
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-medium">
+            <span className="loading loading-spinner loading-xs"></span>
+            <span>{t('applicationSettings.downloading')}</span>
+          </div>
+        )}
+        {updateStatus === 'ready' && (
+          <div className="text-sm font-medium">
+            {getStatusMessage()}
+          </div>
+        )}
+        {updateStatus === 'available' && (
+          <div className="text-sm font-medium">
+            {getStatusMessage()}
+          </div>
+        )}
+        {updateStatus === 'upToDate' && (
+          <div className="text-green-600 dark:text-green-400 text-sm font-medium">
+            {getStatusMessage()}
+          </div>
+        )}
+        {updateStatus === 'error' && (
+          <div className="text-red-600 dark:text-red-400 text-sm font-medium">
+            {getStatusMessage()}
+          </div>
+        )}
       </div>
     </div>
   );
