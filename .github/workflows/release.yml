@@ -59,7 +59,7 @@ jobs:
             args: ''
             os_name: 'linux'
           - platform: 'windows-latest'
-            args: ''
+            args: '--bundles nsis'
             os_name: 'win'
 
     runs-on: ${{ matrix.platform }}
