@@ -54,18 +54,56 @@ jobs:
         shell: bash
         run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: Setup macOS ad-hoc signing
+      - name: Build application (without release)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          npm run tauri build -- --bundles app,dmg
+        env:
+          APPLE_SIGNING_IDENTITY: "-"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Sign macOS app with ad-hoc signature
         if: matrix.platform == 'macos-latest'
         shell: bash
-        run: echo "APPLE_SIGNING_IDENTITY=-" >> $GITHUB_ENV
+        run: |
+          APP_PATH=$(find target/release/bundle/macos -name "*.app" -type d | head -n 1)
+          if [ -n "$APP_PATH" ]; then
+            echo "Signing $APP_PATH with ad-hoc signature..."
+            codesign --force --deep --sign - "$APP_PATH"
+            echo "Verifying signature..."
+            codesign --verify --verbose "$APP_PATH" || true
+            echo "Signature details:"
+            codesign -dvvv "$APP_PATH"
+          else
+            echo "Error: .app bundle not found for signing"
+            find target/release/bundle -type d -name "*.app" || echo "No .app bundles found"
+            exit 1
+          fi
 
-      - name: Build and release
+      - name: Create release and upload macOS artifacts
+        if: matrix.platform == 'macos-latest'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.PACKAGE_VERSION }}
+          name: 'cmdbench-terminal v${{ env.PACKAGE_VERSION }}'
+          body: 'See the assets to download and install this version.'
+          draft: false
+          prerelease: false
+          files: |
+            target/release/bundle/macos/*.app
+            target/release/bundle/macos/*.dmg
+            target/release/bundle/macos/*.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and release (non-macOS)
+        if: matrix.platform != 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
         with:
           tagName: v${{ env.PACKAGE_VERSION }}
           releaseName: 'cmdbench-terminal v${{ env.PACKAGE_VERSION }}'

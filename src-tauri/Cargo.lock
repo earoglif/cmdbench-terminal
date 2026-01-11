@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "cmdbench-terminal"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "portable-pty",
  "serde",
