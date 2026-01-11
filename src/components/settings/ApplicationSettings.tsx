@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MdRefresh } from 'react-icons/md';
 import { useSettingsStore, type Language } from '@/stores/settingsStore';
 import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 
 type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' | 'upToDate';
@@ -79,7 +80,8 @@ const ApplicationSettings: React.FC = () => {
         }
       });
 
-      console.log('Update installed, please restart the application manually');
+      console.log('Update installed, restarting application...');
+      await relaunch();
     } catch (error) {
       console.error('Update installation failed:', error);
       setUpdateStatus('error');
