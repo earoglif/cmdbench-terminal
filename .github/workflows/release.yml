@@ -21,18 +21,22 @@ jobs:
             os_name: 'win'
             rust_target: 'x86_64-pc-windows-msvc'
             bundles: 'nsis'
+            updater_target: 'windows-x86_64'
           - platform: 'macos-14'
             os_name: 'macos-arm64'
             rust_target: 'aarch64-apple-darwin'
             bundles: 'app,dmg'
+            updater_target: 'darwin-aarch64'
           - platform: 'macos-14'
             os_name: 'macos-x64'
             rust_target: 'x86_64-apple-darwin'
             bundles: 'app,dmg'
+            updater_target: 'darwin-x86_64'
           - platform: 'ubuntu-22.04'
             os_name: 'linux'
             rust_target: 'x86_64-unknown-linux-gnu'
             bundles: 'appimage,deb'
+            updater_target: 'linux-x86_64'
     runs-on: ${{ matrix.platform }}
     
     steps:
@@ -109,8 +113,10 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
+          mkdir -p signatures
           VERSION="${{ env.VERSION }}"
           OS="${{ matrix.os_name }}"
+          UPDATER_TARGET="${{ matrix.updater_target }}"
           
           # Determine bundle path based on platform
           if [[ "${{ matrix.platform }}" == macos* ]]; then
@@ -124,16 +130,33 @@ jobs:
           
           # macOS: .app.zip and .dmg
           if [[ "${{ matrix.platform }}" == macos* ]]; then
-            # Create .app.zip
             MACOS_DIR="$TARGET_PATH/macos"
             if [ -d "$MACOS_DIR" ]; then
               APP_NAME=$(ls -d "$MACOS_DIR"/*.app 2>/dev/null | head -n 1)
               if [ -n "$APP_NAME" ]; then
-                (cd "$MACOS_DIR" && zip -r "$GITHUB_WORKSPACE/artifacts/cmdbench-terminal_${VERSION}_${OS}.app.zip" "$(basename "$APP_NAME")")
+                ZIPFILE="cmdbench-terminal_${VERSION}_${OS}.app.zip"
+                (cd "$MACOS_DIR" && zip -r "$GITHUB_WORKSPACE/artifacts/$ZIPFILE" "$(basename "$APP_NAME")")
                 echo "✓ Created .app.zip"
+                
+                # Sign the zip for updater
+                if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+                  echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
+                  if command -v minisign &> /dev/null; then
+                    echo "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" | minisign -S -s /tmp/private.key -m "artifacts/$ZIPFILE"
+                    mv "artifacts/$ZIPFILE.minisig" "signatures/${UPDATER_TARGET}.sig"
+                  fi
+                  rm -f /tmp/private.key
+                fi
+                
+                # Copy existing .sig if minisign not available
+                for sig in "$MACOS_DIR"/*.sig; do
+                  if [ -f "$sig" ]; then
+                    cp "$sig" "signatures/${UPDATER_TARGET}.sig"
+                    echo "✓ Copied signature"
+                  fi
+                done
               fi
             fi
-            # Copy .dmg
             DMG_DIR="$TARGET_PATH/dmg"
             if [ -d "$DMG_DIR" ]; then
               for f in "$DMG_DIR"/*.dmg; do
@@ -150,7 +173,11 @@ jobs:
                 [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.exe" && echo "✓ Created .exe"
               done
               for f in "$NSIS_DIR"/*.sig; do
-                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.exe.sig"
+                if [ -f "$f" ]; then
+                  cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.exe.sig"
+                  cp "$f" "signatures/${UPDATER_TARGET}.sig"
+                  echo "✓ Copied signature"
+                fi
               done
             fi
           fi
@@ -163,7 +190,11 @@ jobs:
                 [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.AppImage" && echo "✓ Created .AppImage"
               done
               for f in "$APPIMAGE_DIR"/*.sig; do
-                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.AppImage.sig"
+                if [ -f "$f" ]; then
+                  cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.AppImage.sig"
+                  cp "$f" "signatures/${UPDATER_TARGET}.sig"
+                  echo "✓ Copied signature"
+                fi
               done
             fi
             DEB_DIR="$TARGET_PATH/deb"
@@ -174,11 +205,22 @@ jobs:
             fi
           fi
           
+          # Save updater info
+          echo "$UPDATER_TARGET" > signatures/target.txt
+          echo "$VERSION" > signatures/version.txt
+          echo "$OS" > signatures/os_name.txt
+          
           echo ""
           echo "=== Prepared artifacts ==="
           ls -la artifacts/
+          echo ""
+          echo "=== Signatures ==="
+          ls -la signatures/
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Upload to Release
+      - name: Upload release artifacts
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
@@ -187,5 +229,128 @@ jobs:
           draft: false
           prerelease: false
           files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload signature artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: signature-${{ matrix.updater_target }}
+          path: signatures/
+          retention-days: 1
+
+  publish-updater:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        shell: bash
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Download all signatures
+        uses: actions/download-artifact@v4
+        with:
+          path: all-signatures
+          pattern: signature-*
+
+      - name: Generate latest.json
+        shell: bash
+        run: |
+          VERSION="${{ env.VERSION }}"
+          REPO="${{ github.repository }}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          echo "Generating latest.json for version $VERSION"
+          echo "Repository: $REPO"
+          echo "Signatures found:"
+          find all-signatures -type f -name "*.sig" || echo "No sig files"
+          ls -laR all-signatures/
+          
+          # Start JSON
+          cat > latest.json << EOF
+          {
+            "version": "$VERSION",
+            "notes": "See the release notes at https://github.com/$REPO/releases/tag/v$VERSION",
+            "pub_date": "$PUB_DATE",
+            "platforms": {
+          EOF
+          
+          FIRST=true
+          
+          # Windows
+          SIG_FILE="all-signatures/signature-windows-x86_64/windows-x86_64.sig"
+          if [ -f "$SIG_FILE" ]; then
+            SIG=$(cat "$SIG_FILE")
+            [ "$FIRST" = false ] && echo "," >> latest.json
+            cat >> latest.json << EOF
+              "windows-x86_64": {
+                "signature": "$SIG",
+                "url": "https://github.com/$REPO/releases/download/v$VERSION/cmdbench-terminal_${VERSION}_win.exe"
+              }
+          EOF
+            FIRST=false
+          fi
+          
+          # macOS ARM64
+          SIG_FILE="all-signatures/signature-darwin-aarch64/darwin-aarch64.sig"
+          if [ -f "$SIG_FILE" ]; then
+            SIG=$(cat "$SIG_FILE")
+            [ "$FIRST" = false ] && echo "," >> latest.json
+            cat >> latest.json << EOF
+              "darwin-aarch64": {
+                "signature": "$SIG",
+                "url": "https://github.com/$REPO/releases/download/v$VERSION/cmdbench-terminal_${VERSION}_macos-arm64.app.zip"
+              }
+          EOF
+            FIRST=false
+          fi
+          
+          # macOS x64
+          SIG_FILE="all-signatures/signature-darwin-x86_64/darwin-x86_64.sig"
+          if [ -f "$SIG_FILE" ]; then
+            SIG=$(cat "$SIG_FILE")
+            [ "$FIRST" = false ] && echo "," >> latest.json
+            cat >> latest.json << EOF
+              "darwin-x86_64": {
+                "signature": "$SIG",
+                "url": "https://github.com/$REPO/releases/download/v$VERSION/cmdbench-terminal_${VERSION}_macos-x64.app.zip"
+              }
+          EOF
+            FIRST=false
+          fi
+          
+          # Linux
+          SIG_FILE="all-signatures/signature-linux-x86_64/linux-x86_64.sig"
+          if [ -f "$SIG_FILE" ]; then
+            SIG=$(cat "$SIG_FILE")
+            [ "$FIRST" = false ] && echo "," >> latest.json
+            cat >> latest.json << EOF
+              "linux-x86_64": {
+                "signature": "$SIG",
+                "url": "https://github.com/$REPO/releases/download/v$VERSION/cmdbench-terminal_${VERSION}_linux.AppImage"
+              }
+          EOF
+            FIRST=false
+          fi
+          
+          # Close JSON
+          cat >> latest.json << EOF
+            }
+          }
+          EOF
+          
+          echo ""
+          echo "=== Generated latest.json ==="
+          cat latest.json
+
+      - name: Upload latest.json to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          files: latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
