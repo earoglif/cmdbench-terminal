@@ -6,8 +6,11 @@ on:
       - 'v*'
   workflow_dispatch:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  release:
+  build:
     permissions:
       contents: write
     strategy:
@@ -15,21 +18,21 @@ jobs:
       matrix:
         include:
           - platform: 'windows-latest'
-            args: '--bundles nsis'
-            os_name: 'windows'
-            rust_target: ''
+            os_name: 'win'
+            rust_target: 'x86_64-pc-windows-msvc'
+            bundles: 'nsis'
           - platform: 'macos-14'
-            args: '--bundles app,dmg'
             os_name: 'macos-arm64'
             rust_target: 'aarch64-apple-darwin'
+            bundles: 'app,dmg'
           - platform: 'macos-14'
-            args: '--bundles app,dmg'
             os_name: 'macos-x64'
             rust_target: 'x86_64-apple-darwin'
+            bundles: 'app,dmg'
           - platform: 'ubuntu-22.04'
-            args: '--bundles appimage,deb'
             os_name: 'linux'
-            rust_target: ''
+            rust_target: 'x86_64-unknown-linux-gnu'
+            bundles: 'appimage,deb'
     runs-on: ${{ matrix.platform }}
     
     steps:
@@ -39,11 +42,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.rust_target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-targets: true
+          cache-on-failure: true
 
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-22.04'
@@ -60,16 +71,20 @@ jobs:
             librsvg2-dev
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Get version
         shell: bash
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: Build application (macOS)
-        if: startsWith(matrix.platform, 'macos')
+      - name: Build application
+        shell: bash
         run: |
-          npm run tauri build -- --target ${{ matrix.rust_target }} --bundles app,dmg
+          if [[ "${{ matrix.platform }}" == macos* ]]; then
+            npm run tauri build -- --target ${{ matrix.rust_target }} --bundles ${{ matrix.bundles }}
+          else
+            npm run tauri build -- --bundles ${{ matrix.bundles }}
+          fi
         env:
           APPLE_SIGNING_IDENTITY: "-"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -80,74 +95,97 @@ jobs:
         shell: bash
         run: |
           BUNDLE_PATH="src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos"
-          echo "Looking for .app in $BUNDLE_PATH"
-          ls -la "$BUNDLE_PATH" || echo "Bundle directory not found"
           APP_PATH=$(find "$BUNDLE_PATH" -name "*.app" -type d | head -n 1)
           if [ -n "$APP_PATH" ]; then
             echo "Signing $APP_PATH with ad-hoc signature..."
             codesign --force --deep --sign - "$APP_PATH"
-            echo "Verifying signature..."
             codesign --verify --verbose "$APP_PATH" || true
-            echo "Signature details:"
-            codesign -dvvv "$APP_PATH"
           else
-            echo "Error: .app bundle not found for signing"
-            find src-tauri/target -type d -name "*.app" 2>/dev/null || echo "No .app bundles found anywhere"
+            echo "Error: .app bundle not found"
             exit 1
           fi
 
-      - name: Create .app.zip for macOS
-        if: startsWith(matrix.platform, 'macos')
+      - name: Prepare artifacts
         shell: bash
         run: |
-          BUNDLE_PATH="src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos"
-          cd "$BUNDLE_PATH"
-          APP_NAME=$(ls -d *.app | head -n 1)
-          APP_BASENAME="${APP_NAME%.app}"
-          zip -r "${APP_BASENAME}_${{ matrix.os_name }}.app.zip" "$APP_NAME"
-          echo "Created ${APP_BASENAME}_${{ matrix.os_name }}.app.zip"
-
-      - name: Rename macOS DMG with OS name
-        if: startsWith(matrix.platform, 'macos')
-        shell: bash
-        run: |
-          BUNDLE_PATH="src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos"
-          cd "$BUNDLE_PATH"
-          for dmg in *.dmg; do
-            if [ -f "$dmg" ]; then
-              basename="${dmg%.dmg}"
-              mv "$dmg" "${basename}_${{ matrix.os_name }}.dmg"
-              echo "Renamed $dmg to ${basename}_${{ matrix.os_name }}.dmg"
+          mkdir -p artifacts
+          VERSION="${{ env.VERSION }}"
+          OS="${{ matrix.os_name }}"
+          
+          # Determine bundle path based on platform
+          if [[ "${{ matrix.platform }}" == macos* ]]; then
+            TARGET_PATH="src-tauri/target/${{ matrix.rust_target }}/release/bundle"
+          else
+            TARGET_PATH="src-tauri/target/release/bundle"
+          fi
+          
+          echo "Looking for bundles in: $TARGET_PATH"
+          find "$TARGET_PATH" -type f \( -name "*.dmg" -o -name "*.app" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.sig" \) 2>/dev/null || true
+          
+          # macOS: .app.zip and .dmg
+          if [[ "${{ matrix.platform }}" == macos* ]]; then
+            # Create .app.zip
+            MACOS_DIR="$TARGET_PATH/macos"
+            if [ -d "$MACOS_DIR" ]; then
+              APP_NAME=$(ls -d "$MACOS_DIR"/*.app 2>/dev/null | head -n 1)
+              if [ -n "$APP_NAME" ]; then
+                (cd "$MACOS_DIR" && zip -r "$GITHUB_WORKSPACE/artifacts/cmdbench-terminal_${VERSION}_${OS}.app.zip" "$(basename "$APP_NAME")")
+                echo "✓ Created .app.zip"
+              fi
             fi
-          done
+            # Copy .dmg
+            DMG_DIR="$TARGET_PATH/dmg"
+            if [ -d "$DMG_DIR" ]; then
+              for f in "$DMG_DIR"/*.dmg; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.dmg" && echo "✓ Created .dmg"
+              done
+            fi
+          fi
+          
+          # Windows: .exe
+          if [[ "${{ matrix.platform }}" == windows* ]]; then
+            NSIS_DIR="$TARGET_PATH/nsis"
+            if [ -d "$NSIS_DIR" ]; then
+              for f in "$NSIS_DIR"/*.exe; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.exe" && echo "✓ Created .exe"
+              done
+              for f in "$NSIS_DIR"/*.sig; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.exe.sig"
+              done
+            fi
+          fi
+          
+          # Linux: .AppImage and .deb
+          if [[ "${{ matrix.platform }}" == ubuntu* ]]; then
+            APPIMAGE_DIR="$TARGET_PATH/appimage"
+            if [ -d "$APPIMAGE_DIR" ]; then
+              for f in "$APPIMAGE_DIR"/*.AppImage; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.AppImage" && echo "✓ Created .AppImage"
+              done
+              for f in "$APPIMAGE_DIR"/*.sig; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.AppImage.sig"
+              done
+            fi
+            DEB_DIR="$TARGET_PATH/deb"
+            if [ -d "$DEB_DIR" ]; then
+              for f in "$DEB_DIR"/*.deb; do
+                [ -f "$f" ] && cp "$f" "artifacts/cmdbench-terminal_${VERSION}_${OS}.deb" && echo "✓ Created .deb"
+              done
+            fi
+          fi
+          
+          echo ""
+          echo "=== Prepared artifacts ==="
+          ls -la artifacts/
 
-      - name: Create release and upload macOS artifacts
-        if: startsWith(matrix.platform, 'macos')
-        uses: softprops/action-gh-release@v1
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.PACKAGE_VERSION }}
-          name: 'cmdbench-terminal v${{ env.PACKAGE_VERSION }}'
+          tag_name: v${{ env.VERSION }}
+          name: 'cmdbench-terminal v${{ env.VERSION }}'
           body: 'See the assets to download and install this version.'
           draft: false
           prerelease: false
-          files: |
-            src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos/*.app.zip
-            src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos/*_${{ matrix.os_name }}.dmg
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and release (non-macOS)
-        if: ${{ !startsWith(matrix.platform, 'macos') }}
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          tagName: v${{ env.PACKAGE_VERSION }}
-          releaseName: 'cmdbench-terminal v${{ env.PACKAGE_VERSION }}'
-          releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
-          includeUpdaterJson: true
