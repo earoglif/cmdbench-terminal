@@ -5,6 +5,8 @@ import { useSettingsStore, type Language } from '@/stores/settingsStore';
 import { check, type DownloadEvent } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
+import { platform } from '@tauri-apps/plugin-os';
+import { open } from '@tauri-apps/plugin-shell';
 
 type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' | 'upToDate';
 
@@ -49,7 +51,6 @@ const ApplicationSettings: React.FC = () => {
 
   const installUpdate = async () => {
     try {
-      setUpdateStatus('downloading');
       const update = await check();
       
       if (!update) {
@@ -57,31 +58,49 @@ const ApplicationSettings: React.FC = () => {
         return;
       }
 
-      let downloaded = 0;
-      let contentLength = 0;
+      const currentPlatform = await platform();
+      const isLinux = currentPlatform === 'linux';
+      const isMacOS = currentPlatform === 'macos';
+      const isWindows = currentPlatform === 'windows';
 
-      console.log('installUpdate update:', update);
-      
-      await update.downloadAndInstall((event: DownloadEvent) => {
-        console.log('installUpdate event:', event);
-        switch (event.event) {
-          case 'Started':
-            contentLength = event.data.contentLength || 0;
-            console.log(`Started downloading ${contentLength} bytes`);
-            break;
-          case 'Progress':
-            downloaded += event.data.chunkLength;
-            console.log(`Downloaded ${downloaded} of ${contentLength}`);
-            break;
-          case 'Finished':
-            console.log('Download finished');
-            setUpdateStatus('ready');
-            break;
-        }
-      });
+      // Для Linux и macOS открываем страницу релиза на GitHub в системном браузере
+      if (isLinux || isMacOS) {
+        const releaseUrl = `https://github.com/earoglif/cmdbench-terminal/releases/tag/v${update.version}`;
+        await open(releaseUrl);
+        setUpdateStatus('idle');
+        return;
+      }
 
-      console.log('Update installed, restarting application...');
-      await relaunch();
+      // Для Windows оставляем прежний функционал
+      if (isWindows) {
+        setUpdateStatus('downloading');
+        
+        let downloaded = 0;
+        let contentLength = 0;
+
+        console.log('installUpdate update:', update);
+        
+        await update.downloadAndInstall((event: DownloadEvent) => {
+          console.log('installUpdate event:', event);
+          switch (event.event) {
+            case 'Started':
+              contentLength = event.data.contentLength || 0;
+              console.log(`Started downloading ${contentLength} bytes`);
+              break;
+            case 'Progress':
+              downloaded += event.data.chunkLength;
+              console.log(`Downloaded ${downloaded} of ${contentLength}`);
+              break;
+            case 'Finished':
+              console.log('Download finished');
+              setUpdateStatus('ready');
+              break;
+          }
+        });
+
+        console.log('Update installed, restarting application...');
+        await relaunch();
+      }
     } catch (error) {
       console.error('Update installation failed:', error);
       setUpdateStatus('error');
@@ -132,7 +151,6 @@ const ApplicationSettings: React.FC = () => {
 
       <div className="divider"></div>
 
-      {/* Import the icon at the top of your file: import { MdRefresh } from 'react-icons/md'; */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <span className="text-base-content/70 text-sm">
