@@ -102,7 +102,7 @@ const SortableTabItem: React.FC<SortableTabItemProps> = ({
           onMouseDown={(e) => {
             e.stopPropagation();
           }}
-          className="btn btn-ghost btn-xs p-0 min-h-0 w-0 group-hover:w-4 h-4 overflow-hidden hover:bg-error hover:text-error-content transition-all ml-2"
+          className="btn btn-ghost btn-xs p-0 min-h-0 w-0 group-hover:w-4 h-4 overflow-hidden hover:bg-base-300 transition-all ml-2"
         >
           ×
         </button>
@@ -358,7 +358,7 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
 
       {/* Dropdown меню */}
       <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm px-2">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm px-2 hover:bg-base-300">
           <MenuIcon className="w-4 h-4" />
         </div>
         <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52 max-h-[80vh] overflow-y-auto" style={{ gridTemplateColumns: '1fr', display: 'grid' }}>

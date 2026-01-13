@@ -13,7 +13,7 @@ const MultipleTerminals = forwardRef<HTMLDivElement, MultipleTerminalsProps>(
     const hasSettingsTab = tabs.some((tab) => tab.isSettings);
 
     return (
-      <div className={`flex-1 overflow-hidden ${className}`}>
+      <div className={`flex-1 overflow-hidden border-r border-b border-l border-base-300 ${className}`}>
         <div ref={ref} className="h-full w-full relative">
           {hasSettingsTab && (
             <div 
