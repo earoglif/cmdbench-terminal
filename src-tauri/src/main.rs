@@ -113,7 +113,8 @@ async fn async_write_to_pty(pty_id: String, data: &str, state: State<'_, AppStat
     let mut instances = state.pty_instances.lock().await;
 
     if let Some(instance) = instances.get_mut(&pty_id) {
-        write!(instance.writer, "{}", data).map_err(|err| err.to_string())?;
+        // Use write_all for atomic byte writing - fixes Cyrillic input duplication on Linux
+        instance.writer.write_all(data.as_bytes()).map_err(|err| err.to_string())?;
         instance.writer.flush().map_err(|err| err.to_string())?;
         Ok(())
     } else {
