@@ -74,13 +74,32 @@ async fn async_create_shell(shell_path: Option<String>, rows: Option<u16>, cols:
     let mut reader = reader;
     thread::spawn(move || {
         let mut buf = [0u8; 4096];
+        let mut incomplete_utf8 = Vec::new(); // Buffer for incomplete UTF-8 sequences
+        
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => break, // EOF
                 Ok(n) => {
-                    let s = String::from_utf8_lossy(&buf[..n]).into_owned();
-                    if tx.blocking_send(s).is_err() {
-                        break;
+                    // Combine incomplete bytes from previous read with new data
+                    incomplete_utf8.extend_from_slice(&buf[..n]);
+                    
+                    // Find the longest valid UTF-8 prefix
+                    let valid_up_to = match std::str::from_utf8(&incomplete_utf8) {
+                        Ok(_) => incomplete_utf8.len(),
+                        Err(e) => e.valid_up_to(),
+                    };
+                    
+                    if valid_up_to > 0 {
+                        // Safe because we just validated the UTF-8
+                        let s = String::from_utf8(incomplete_utf8[..valid_up_to].to_vec())
+                            .unwrap_or_else(|_| String::from_utf8_lossy(&incomplete_utf8[..valid_up_to]).into_owned());
+                        
+                        if tx.blocking_send(s).is_err() {
+                            break;
+                        }
+                        
+                        // Keep incomplete bytes for next iteration
+                        incomplete_utf8.drain(..valid_up_to);
                     }
                 }
                 Err(_) => break,
@@ -113,8 +132,7 @@ async fn async_write_to_pty(pty_id: String, data: &str, state: State<'_, AppStat
     let mut instances = state.pty_instances.lock().await;
 
     if let Some(instance) = instances.get_mut(&pty_id) {
-        // Use write_all for atomic byte writing - fixes Cyrillic input duplication on Linux
-        instance.writer.write_all(data.as_bytes()).map_err(|err| err.to_string())?;
+        write!(instance.writer, "{}", data).map_err(|err| err.to_string())?;
         instance.writer.flush().map_err(|err| err.to_string())?;
         Ok(())
     } else {

@@ -211,7 +211,27 @@ export const useMultipleTerminals = () => {
     };
 
     // Обработка ввода терминала
+    // On Linux with IME, composition events can cause duplicate input for non-ASCII characters
+    // We track the last sent data and timestamp to filter out rapid duplicates
+    let lastSentData = '';
+    let lastSentTime = 0;
+    const DUPLICATE_THRESHOLD_MS = 50; // Threshold for detecting duplicate IME events
+    
     terminal.onData((data: string) => {
+      const now = Date.now();
+      
+      // Filter out duplicate non-ASCII input that arrives within threshold
+      // This fixes duplicate Cyrillic character input on Linux with WebKitGTK IME
+      if (data === lastSentData && 
+          data.length === 1 && 
+          data.charCodeAt(0) > 127 && 
+          (now - lastSentTime) < DUPLICATE_THRESHOLD_MS) {
+        return; // Skip duplicate IME event
+      }
+      
+      lastSentData = data;
+      lastSentTime = now;
+      
       invoke("async_write_to_pty", { ptyId, data }).catch(console.error);
     });
 
