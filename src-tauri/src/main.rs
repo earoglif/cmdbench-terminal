@@ -53,7 +53,12 @@ async fn async_create_shell(shell_path: Option<String>, rows: Option<u16>, cols:
     cmd.env("TERM", "cygwin");
 
     #[cfg(not(target_os = "windows"))]
-    cmd.env("TERM", "xterm-256color");
+    {
+        cmd.env("TERM", "xterm-256color");
+        // Set UTF-8 locale for proper Cyrillic and other non-ASCII character support
+        cmd.env("LANG", "en_US.UTF-8");
+        cmd.env("LC_ALL", "en_US.UTF-8");
+    }
 
     let mut child = pty_pair
         .slave
