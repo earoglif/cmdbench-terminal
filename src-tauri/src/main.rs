@@ -389,10 +389,9 @@ fn main() {
     // Fix for IBus IME bug on Linux (Ubuntu) that causes cumulative input for non-ASCII characters.
     // By switching to XIM or disabling IME, we avoid the duplicate/cumulative character input issue.
     // This must be set BEFORE the GTK/WebKitGTK is initialized.
+    // SAFETY: This is called at the very start of main(), before any threads are spawned.
     #[cfg(target_os = "linux")]
-    {
-        // Use "xim" for basic X input method, or "gtk-im-context-simple" for simple GTK input
-        // Setting to empty string also works and disables IME completely
+    unsafe {
         std::env::set_var("GTK_IM_MODULE", "gtk-im-context-simple");
     }
 
