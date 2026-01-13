@@ -74,32 +74,13 @@ async fn async_create_shell(shell_path: Option<String>, rows: Option<u16>, cols:
     let mut reader = reader;
     thread::spawn(move || {
         let mut buf = [0u8; 4096];
-        let mut incomplete_utf8 = Vec::new(); // Buffer for incomplete UTF-8 sequences
-        
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => break, // EOF
                 Ok(n) => {
-                    // Combine incomplete bytes from previous read with new data
-                    incomplete_utf8.extend_from_slice(&buf[..n]);
-                    
-                    // Find the longest valid UTF-8 prefix
-                    let valid_up_to = match std::str::from_utf8(&incomplete_utf8) {
-                        Ok(_) => incomplete_utf8.len(),
-                        Err(e) => e.valid_up_to(),
-                    };
-                    
-                    if valid_up_to > 0 {
-                        // Safe because we just validated the UTF-8
-                        let s = String::from_utf8(incomplete_utf8[..valid_up_to].to_vec())
-                            .unwrap_or_else(|_| String::from_utf8_lossy(&incomplete_utf8[..valid_up_to]).into_owned());
-                        
-                        if tx.blocking_send(s).is_err() {
-                            break;
-                        }
-                        
-                        // Keep incomplete bytes for next iteration
-                        incomplete_utf8.drain(..valid_up_to);
+                    let s = String::from_utf8_lossy(&buf[..n]).into_owned();
+                    if tx.blocking_send(s).is_err() {
+                        break;
                     }
                 }
                 Err(_) => break,
@@ -132,7 +113,8 @@ async fn async_write_to_pty(pty_id: String, data: &str, state: State<'_, AppStat
     let mut instances = state.pty_instances.lock().await;
 
     if let Some(instance) = instances.get_mut(&pty_id) {
-        write!(instance.writer, "{}", data).map_err(|err| err.to_string())?;
+        // Use write_all for atomic byte writing - fixes Cyrillic input duplication on Linux
+        instance.writer.write_all(data.as_bytes()).map_err(|err| err.to_string())?;
         instance.writer.flush().map_err(|err| err.to_string())?;
         Ok(())
     } else {
@@ -404,6 +386,16 @@ async fn get_shell_profiles() -> Result<Vec<ShellProfile>, String> {
 }
 
 fn main() {
+    // Fix for IBus IME bug on Linux (Ubuntu) that causes cumulative input for non-ASCII characters.
+    // By switching to XIM or disabling IME, we avoid the duplicate/cumulative character input issue.
+    // This must be set BEFORE the GTK/WebKitGTK is initialized.
+    #[cfg(target_os = "linux")]
+    {
+        // Use "xim" for basic X input method, or "gtk-im-context-simple" for simple GTK input
+        // Setting to empty string also works and disables IME completely
+        std::env::set_var("GTK_IM_MODULE", "gtk-im-context-simple");
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_dialog::init())
