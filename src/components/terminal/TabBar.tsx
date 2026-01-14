@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react';
+import React, { FC, useState, useRef, useLayoutEffect, useEffect, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -8,6 +8,7 @@ import { useCommands } from '@hooks/useCommands';
 import { ShellProfile } from '@/types/terminal';
 import { Command } from '@/stores/commandsStore';
 import { MenuIcon, PlusIcon, MinimizeIcon, MaximizeIcon, RestoreIcon, CloseIcon } from '@/shared/icons';
+import { HiOutlineX } from 'react-icons/hi';
 import {
   DndContext,
   closestCenter,
@@ -36,7 +37,7 @@ interface SortableTabItemProps {
   tab: { id: string; title: string };
   isActive: boolean;
   onDoubleClick: (tabId: string) => void;
-  onClick: (e: React.MouseEvent, tabId: string) => void;
+  onClick: (e: MouseEvent, tabId: string) => void;
   onRemove: (tabId: string) => void;
   tabsCount: number;
 }
@@ -45,7 +46,7 @@ interface TabBarProps {
   onCommandClick?: (command: Command) => void;
 }
 
-const SortableTabItem: React.FC<SortableTabItemProps> = ({
+const SortableTabItem: FC<SortableTabItemProps> = ({
   tab,
   isActive,
   onDoubleClick,
@@ -69,7 +70,7 @@ const SortableTabItem: React.FC<SortableTabItemProps> = ({
     position: 'relative' as const,
   };
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleDoubleClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onDoubleClick(tab.id);
@@ -102,16 +103,16 @@ const SortableTabItem: React.FC<SortableTabItemProps> = ({
           onMouseDown={(e) => {
             e.stopPropagation();
           }}
-          className="btn btn-ghost btn-xs p-0 min-h-0 w-0 group-hover:w-4 h-4 overflow-hidden hover:bg-base-300 transition-all ml-2"
+          className="btn btn-ghost btn-xs p-0 min-h-0 w-0 group-hover:w-4 h-4 overflow-hidden hover:bg-base-300 transition-all ml-2 flex items-center justify-center group"
         >
-          ×
+          <HiOutlineX className="w-3 h-3 group-hover:text-red-500 transition-colors" />
         </button>
       )}
     </div>
   );
 };
 
-const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
+const TabBar: FC<TabBarProps> = ({ onCommandClick }) => {
   const { t } = useTranslation();
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, renameTab, reorderTabs, addSettingsTab } = useTerminalStore();
   const { data: commandsData } = useCommands();
@@ -122,8 +123,8 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
   const [shellProfiles, setShellProfiles] = useState<ShellProfile[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isMacOS, setIsMacOS] = useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const dialogRef = React.useRef<HTMLDialogElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -187,7 +188,6 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
     closeMenu();
   };
 
-
   const handleSettingsClick = () => {
     addSettingsTab();
     closeMenu();
@@ -198,7 +198,7 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
     onCommandClick?.(command);
   };
 
-  const handleClick = (_e: React.MouseEvent, tabId: string) => {
+  const handleClick = (_e: MouseEvent, tabId: string) => {
     setActiveTab(tabId);
   };
 
@@ -245,7 +245,7 @@ const TabBar: React.FC<TabBarProps> = ({ onCommandClick }) => {
     }
   }, [modalOpen]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && modalOpen && dialogRef.current?.open) {
         e.preventDefault();
