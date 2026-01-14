@@ -36,6 +36,7 @@ export const useMultipleTerminals = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const activeReadLoopsRef = useRef<Set<string>>(new Set()); // Активные циклы чтения
+  const hasUnexecutedInputRef = useRef<Map<string, boolean>>(new Map()); // Отслеживание незавершенного ввода для каждого PTY
   
   // Обновление шрифта для всех активных терминалов при изменении настроек
   useEffect(() => {
@@ -193,6 +194,8 @@ export const useMultipleTerminals = () => {
     try {
       ptyId = await invoke<string>("async_create_shell", { shellPath, rows, cols });
       ptyToTabMapRef.current.set(ptyId, tabId);
+      // Инициализируем флаг незавершенного ввода (по умолчанию false)
+      hasUnexecutedInputRef.current.set(ptyId, false);
       // Запускаем цикл чтения данных из PTY
       startReadLoop(ptyId, terminal);
     } catch (error) {
@@ -212,6 +215,15 @@ export const useMultipleTerminals = () => {
 
     // Обработка ввода терминала
     terminal.onData((data: string) => {
+      // Отслеживаем незавершенный ввод
+      // Если пользователь нажал Enter (\r) или Ctrl+C (\x03), считаем что ввод завершен
+      if (data === '\r' || data === '\x03') {
+        hasUnexecutedInputRef.current.set(ptyId, false);
+      } else if (data.length > 0) {
+        // Любой другой ввод означает, что есть незавершенная команда
+        hasUnexecutedInputRef.current.set(ptyId, true);
+      }
+      
       invoke("async_write_to_pty", { ptyId, data }).catch(console.error);
     });
 
@@ -355,10 +367,20 @@ export const useMultipleTerminals = () => {
     
     const activeTerminal = terminalsRef.current.get(activeTabId);
     if (activeTerminal) {
+      // ВСЕГДА отправляем Ctrl+C перед выполнением команды
+      // Это гарантирует очистку любого введенного текста независимо от состояния
+      // \x03 (Ctrl+C) - универсальный способ прервать текущий ввод
+      // Работает во всех оболочках: bash, zsh, PowerShell, cmd и других
+      // Если строка уже пустая, Ctrl+C просто создаст новую строку приглашения
       invoke("async_write_to_pty", { 
         ptyId: activeTerminal.ptyId, 
-        data: command + "\r" 
+        data: '\x03' + command + "\r" 
       }).catch(console.error);
+
+      console.log('runCommand:', command);      
+      
+      // Сбрасываем флаг незавершенного ввода
+      hasUnexecutedInputRef.current.set(activeTerminal.ptyId, false);
     }
   }, [activeTabId]);
 
@@ -438,6 +460,9 @@ export const useMultipleTerminals = () => {
         // Удаляем связь ptyId -> tabId
         ptyToTabMapRef.current.delete(instance.ptyId);
         
+        // Удаляем флаг незавершенного ввода
+        hasUnexecutedInputRef.current.delete(instance.ptyId);
+        
         // Удаляем PTY
         invoke("async_remove_pty", { ptyId: instance.ptyId }).catch(console.error);
         
@@ -490,6 +515,7 @@ export const useMultipleTerminals = () => {
       // Останавливаем все циклы чтения
       activeReadLoopsRef.current.clear();
       ptyToTabMapRef.current.clear();
+      hasUnexecutedInputRef.current.clear();
       
       terminalsRef.current.forEach((instance) => {
         invoke("async_remove_pty", { ptyId: instance.ptyId }).catch(console.error);
