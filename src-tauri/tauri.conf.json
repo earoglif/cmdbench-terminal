@@ -1,6 +1,6 @@
 {
-  "productName": "cmdbench-terminal",
-  "version": "0.1.0-alpha.34",
+  "productName": "CMDBench terminal",
+  "version": "0.1.0-alpha.35",
   "identifier": "com.cmdbench-terminal.dev",
   "build": {
     "beforeDevCommand": "npm run dev:vite",
