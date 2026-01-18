@@ -367,14 +367,9 @@ export const useMultipleTerminals = () => {
     
     const activeTerminal = terminalsRef.current.get(activeTabId);
     if (activeTerminal) {
-      // ВСЕГДА отправляем Ctrl+C перед выполнением команды
-      // Это гарантирует очистку любого введенного текста независимо от состояния
-      // \x03 (Ctrl+C) - универсальный способ прервать текущий ввод
-      // Работает во всех оболочках: bash, zsh, PowerShell, cmd и других
-      // Если строка уже пустая, Ctrl+C просто создаст новую строку приглашения
       invoke("async_write_to_pty", { 
         ptyId: activeTerminal.ptyId, 
-        data: '\x03' + command + "\r" 
+        data: command + "\r" 
       }).catch(console.error);
 
       console.log('runCommand:', command);      

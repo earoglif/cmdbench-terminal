@@ -338,10 +338,14 @@ const TabBar: FC<TabBarProps> = ({ onCommandClick }) => {
           <div 
             className="flex-1 h-full min-h-[40px] cursor-default"
             onMouseDown={(e) => {
-              if (e.button === 0) {
+              if (e.button === 0 && e.detail === 1) {
                 e.preventDefault();
                 getCurrentWindow().startDragging();
               }
+            }}
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              void handleMaximize();
             }}
           />
         </div>

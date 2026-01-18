@@ -1,10 +1,10 @@
 ## CMDBench terminal
 
-Десктопное приложение-терминал на базе Tauri. Позволяет создавать, организовывать и быстро выполнять команды с параметрами, синхронизировать их и настраивать интерфейс под свои нужды.
+A desktop terminal application built on Tauri. Allows you to create, organize, and quickly execute commands with parameters, synchronize them, and customize the interface to your needs.
 
-### Основные возможности
+### Key Features
 
-- **Множественные терминалы** — работа с несколькими вкладками терминала одновременно
-- **Управление командами** — создание, редактирование и группировка команд с параметрами
-- **Синхронизация** — сохранение/загрузка команд и групп команд в json файлах
-- **Настройки** — кастомизация внешнего вида, горячих клавиш и профилей оболочки
+- **Command management** — create, edit, and group commands with parameters
+- **Synchronization** — save/load commands and command groups in JSON files
+- **Multiple terminals** — work with several terminal tabs simultaneously
+- **Settings** — customize appearance, hotkeys, and shell profiles
