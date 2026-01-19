@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { CommandField } from '@/stores/commandsStore';
 import { FiFolder } from 'react-icons/fi';
+import { UnsavedChangesConfirmModal } from '@/components/UnsavedChangesConfirmModal';
 
 interface FieldValue {
   id: string;
@@ -26,6 +27,7 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
 }) => {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const initialValuesRef = useRef<Record<string, string> | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     fields.forEach(f => {
@@ -33,6 +35,15 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
     });
     return initial;
   });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const buildInitialValues = (sourceFields: CommandField[]) => {
+    const initial: Record<string, string> = {};
+    sourceFields.forEach(f => {
+      initial[f.id] = Array.isArray(f.value) ? f.value[0] || '' : (f.value || '');
+    });
+    return initial;
+  };
 
   const handleValueChange = (fieldId: string, value: string) => {
     setFieldValues(prev => ({ ...prev, [fieldId]: value }));
@@ -68,11 +79,37 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      const initialValues = buildInitialValues(fields);
+      setFieldValues(initialValues);
+      initialValuesRef.current = initialValues;
+      setConfirmOpen(false);
+    }
+  }, [isOpen, fields]);
+
   const handleCloseModal = () => {
     if (dialogRef.current) {
       dialogRef.current.close();
     }
     onCancel();
+  };
+
+  const isDirty = useMemo(() => {
+    if (!isOpen || !initialValuesRef.current) return false;
+    return fields.some(field => {
+      const currentValue = fieldValues[field.id] || '';
+      const initialValue = initialValuesRef.current?.[field.id] || '';
+      return currentValue !== initialValue;
+    });
+  }, [isOpen, fields, fieldValues]);
+
+  const handleRequestClose = () => {
+    if (isDirty) {
+      setConfirmOpen(true);
+      return;
+    }
+    handleCloseModal();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -186,49 +223,65 @@ export const CommandExecuteDialog: React.FC<CommandExecuteDialogProps> = ({
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="modal"
-      onCancel={handleCloseModal}
-    >
-      <div className="modal-box max-w-lg">
-        <h3 className="font-bold text-lg mb-4">{commandName}</h3>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            {fields.map(field => (
-              <div key={field.id} className="form-control">
-                <label className="label py-1">
-                  <span className="label-text">
-                    {field.name}
-                    {field.isRequired && <span className="text-error ml-1">*</span>}
-                  </span>
-                </label>
-                {field.description && (
-                  <p className="text-xs text-base-content/60 mb-1">{field.description}</p>
-                )}
-                {renderField(field)}
-              </div>
-            ))}
-          </div>
+    <>
+      <dialog
+        ref={dialogRef}
+        className="modal"
+        onCancel={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}
+      >
+        <div className="modal-box max-w-lg">
+          <h3 className="font-bold text-lg mb-4">{commandName}</h3>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              {fields.map(field => (
+                <div key={field.id} className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text">
+                      {field.name}
+                      {field.isRequired && <span className="text-error ml-1">*</span>}
+                    </span>
+                  </label>
+                  {field.description && (
+                    <p className="text-xs text-base-content/60 mb-1">{field.description}</p>
+                  )}
+                  {renderField(field)}
+                </div>
+              ))}
+            </div>
 
-          <div className="modal-action mt-6">
-            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
-              {t('commandExecute.cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={!isFormValid()}
-            >
-              {t('commandExecute.execute')}
-            </button>
-          </div>
+            <div className="modal-action mt-6">
+              <button type="button" className="btn btn-ghost" onClick={handleRequestClose}>
+                {t('commandExecute.cancel')}
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={!isFormValid()}
+              >
+                {t('commandExecute.execute')}
+              </button>
+            </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}>
+          <button type="button">close</button>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
-        <button type="button">close</button>
-      </form>
-    </dialog>
+      </dialog>
+      <UnsavedChangesConfirmModal
+        isOpen={confirmOpen}
+        onDiscard={() => {
+          setConfirmOpen(false);
+          handleCloseModal();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 };

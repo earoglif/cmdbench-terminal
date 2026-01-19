@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MdModeEdit, MdStop } from "react-icons/md";
 import { useShortcutsStore, KeyboardShortcut } from '@/stores/shortcutsStore';
 import { useCommandsStore } from '@/stores/commandsStore';
+import { UnsavedChangesConfirmModal } from '@/components/UnsavedChangesConfirmModal';
 
 interface ShortcutEditorModalProps {
   isOpen: boolean;
@@ -21,6 +22,11 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   const { commands } = useCommandsStore();
   const { getShortcutByKeys, setEditorModalOpen } = useShortcutsStore();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const initialDataRef = useRef<{
+    keys: string;
+    commandId: string;
+    description: string;
+  } | null>(null);
   
   const [keys, setKeys] = useState('');
   const [commandId, setCommandId] = useState('');
@@ -28,6 +34,7 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && dialogRef.current) {
@@ -40,17 +47,31 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (shortcut) {
-        setKeys(shortcut.keys);
-        setCommandId(shortcut.commandId || '');
-        setDescription(shortcut.description || '');
+        const initialKeys = shortcut.keys;
+        const initialCommandId = shortcut.commandId || '';
+        const initialDescription = shortcut.description || '';
+        setKeys(initialKeys);
+        setCommandId(initialCommandId);
+        setDescription(initialDescription);
+        initialDataRef.current = {
+          keys: initialKeys,
+          commandId: initialCommandId,
+          description: initialDescription,
+        };
       } else {
         setKeys('');
         setCommandId('');
         setDescription('');
+        initialDataRef.current = {
+          keys: '',
+          commandId: '',
+          description: '',
+        };
       }
       setError('');
       setDuplicateWarning('');
       setIsRecording(false);
+      setConfirmOpen(false);
       setEditorModalOpen(true);
     } else {
       setEditorModalOpen(false);
@@ -119,6 +140,23 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
     onClose();
   };
 
+  const isDirty = useMemo(() => {
+    if (!isOpen || !initialDataRef.current) return false;
+    return (
+      keys !== initialDataRef.current.keys ||
+      commandId !== initialDataRef.current.commandId ||
+      description !== initialDataRef.current.description
+    );
+  }, [isOpen, keys, commandId, description]);
+
+  const handleRequestClose = () => {
+    if (isDirty) {
+      setConfirmOpen(true);
+      return;
+    }
+    handleCloseModal();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -153,131 +191,147 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="modal"
-      onCancel={handleCloseModal}
-    >
-      <div className="modal-box max-w-lg">
-        <h3 className="font-bold text-lg mb-4">
-          {shortcut ? t('shortcuts.editShortcut') : t('shortcuts.addShortcut')}
-        </h3>
+    <>
+      <dialog
+        ref={dialogRef}
+        className="modal"
+        onCancel={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}
+      >
+        <div className="modal-box max-w-lg">
+          <h3 className="font-bold text-lg mb-4">
+            {shortcut ? t('shortcuts.editShortcut') : t('shortcuts.addShortcut')}
+          </h3>
 
-        {shortcut?.isSystem && (
-          <div className="alert alert-info mb-4 text-sm">
-            {t('shortcuts.systemShortcutCanEdit')}
-          </div>
-        )}
+          {shortcut?.isSystem && (
+            <div className="alert alert-info mb-4 text-sm">
+              {t('shortcuts.systemShortcutCanEdit')}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">{t('shortcuts.keys')}</span>
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="input input-bordered flex-1"
-                  value={keys}
-                  placeholder={t('shortcuts.keysPlaceholder')}
-                  readOnly
-                  required
-                />
-                <button
-                  type="button"
-                  className={`btn ${isRecording ? 'btn-error' : 'btn-primary'}`}
-                  onClick={() => setIsRecording(!isRecording)}
-                >
-                  {isRecording ? <MdStop className="w-4 h-4" title={t('shortcuts.stopRecording')} /> : <MdModeEdit className="w-4 h-4" title={t('shortcuts.recordKeys')} />}
-                </button>
+          <form onSubmit={handleSubmit}>
+            <div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold">{t('shortcuts.keys')}</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="input input-bordered flex-1"
+                    value={keys}
+                    placeholder={t('shortcuts.keysPlaceholder')}
+                    readOnly
+                    required
+                  />
+                  <button
+                    type="button"
+                    className={`btn ${isRecording ? 'btn-error' : 'btn-primary'}`}
+                    onClick={() => setIsRecording(!isRecording)}
+                  >
+                    {isRecording ? <MdStop className="w-4 h-4" title={t('shortcuts.stopRecording')} /> : <MdModeEdit className="w-4 h-4" title={t('shortcuts.recordKeys')} />}
+                  </button>
+                </div>
+                {isRecording && (
+                  <label className="label">
+                    <span className="label-text-alt text-warning">{t('shortcuts.recording')}</span>
+                  </label>
+                )}
+                {duplicateWarning && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{duplicateWarning}</span>
+                  </label>
+                )}
               </div>
-              {isRecording && (
-                <label className="label">
-                  <span className="label-text-alt text-warning">{t('shortcuts.recording')}</span>
-                </label>
+
+              {!shortcut?.isSystem && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">{t('shortcuts.command')}</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={commandId}
+                    onChange={(e) => setCommandId(e.target.value)}
+                    required
+                  >
+                    <option value="">{t('shortcuts.selectCommand')}</option>
+                    {commands.map((cmd) => (
+                      <option key={cmd.id} value={cmd.id}>
+                        {cmd.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
-              {duplicateWarning && (
+
+              {shortcut?.isSystem && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">{t('shortcuts.action')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered"
+                    value={t(`shortcuts.actions.${shortcut.action}`)}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              )}
+
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text-alt text-error">{duplicateWarning}</span>
+                  <span className="label-text font-semibold">{t('shortcuts.description')}</span>
                 </label>
+                <textarea
+                  className="textarea textarea-bordered"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t('shortcuts.descriptionPlaceholder')}
+                  rows={2}
+                />
+              </div>
+
+              {error && (
+                <div className="alert alert-error">
+                  <span className="text-sm">{error}</span>
+                </div>
               )}
             </div>
 
-            {!shortcut?.isSystem && (
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">{t('shortcuts.command')}</span>
-                </label>
-                <select
-                  className="select select-bordered"
-                  value={commandId}
-                  onChange={(e) => setCommandId(e.target.value)}
-                  required
-                >
-                  <option value="">{t('shortcuts.selectCommand')}</option>
-                  {commands.map((cmd) => (
-                    <option key={cmd.id} value={cmd.id}>
-                      {cmd.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {shortcut?.isSystem && (
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">{t('shortcuts.action')}</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  value={t(`shortcuts.actions.${shortcut.action}`)}
-                  readOnly
-                  disabled
-                />
-              </div>
-            )}
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">{t('shortcuts.description')}</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t('shortcuts.descriptionPlaceholder')}
-                rows={2}
-              />
+            <div className="modal-action mt-6">
+              <button type="button" className="btn btn-ghost" onClick={handleRequestClose}>
+                {t('shortcuts.cancel')}
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                disabled={!!duplicateWarning}
+              >
+                {t('shortcuts.save')}
+              </button>
             </div>
-
-            {error && (
-              <div className="alert alert-error">
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="modal-action mt-6">
-            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
-              {t('shortcuts.cancel')}
-            </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={!!duplicateWarning}
-            >
-              {t('shortcuts.save')}
-            </button>
-          </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}>
+          <button type="button">close</button>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
-        <button type="button">close</button>
-      </form>
-    </dialog>
+      </dialog>
+      <UnsavedChangesConfirmModal
+        isOpen={confirmOpen}
+        onDiscard={() => {
+          setConfirmOpen(false);
+          handleCloseModal();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 };
 

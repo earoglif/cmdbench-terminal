@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CommandGroup } from '@/stores/commandGroupsStore';
+import { UnsavedChangesConfirmModal } from '@/components/UnsavedChangesConfirmModal';
 
 interface GroupModalProps {
   isOpen: boolean;
@@ -21,9 +22,15 @@ export const GroupModal: React.FC<GroupModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const initialDataRef = useRef<{
+    name: string;
+    description: string;
+    parentId: string;
+  } | null>(null);
   const [name, setName] = useState(group?.name || '');
   const [description, setDescription] = useState(group?.description || '');
   const [selectedParentId, setSelectedParentId] = useState<string>(parentId || group?.parentId || '');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && dialogRef.current) {
@@ -35,11 +42,29 @@ export const GroupModal: React.FC<GroupModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setName(group?.name || '');
-      setDescription(group?.description || '');
-      setSelectedParentId(parentId || group?.parentId || '');
+      const initialName = group?.name || '';
+      const initialDescription = group?.description || '';
+      const initialParentId = parentId || group?.parentId || '';
+      setName(initialName);
+      setDescription(initialDescription);
+      setSelectedParentId(initialParentId);
+      initialDataRef.current = {
+        name: initialName,
+        description: initialDescription,
+        parentId: initialParentId,
+      };
+      setConfirmOpen(false);
     }
   }, [isOpen, group, parentId]);
+
+  const isDirty = useMemo(() => {
+    if (!isOpen || !initialDataRef.current) return false;
+    return (
+      name !== initialDataRef.current.name ||
+      description !== initialDataRef.current.description ||
+      selectedParentId !== initialDataRef.current.parentId
+    );
+  }, [isOpen, name, description, selectedParentId]);
 
   const getDescendantIds = (groupId: string): Set<string> => {
     const descendants = new Set<string>();
@@ -78,6 +103,14 @@ export const GroupModal: React.FC<GroupModalProps> = ({
     onClose();
   };
 
+  const handleRequestClose = () => {
+    if (isDirty) {
+      setConfirmOpen(true);
+      return;
+    }
+    handleCloseModal();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -90,76 +123,92 @@ export const GroupModal: React.FC<GroupModalProps> = ({
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="modal"
-      onCancel={handleCloseModal}
-    >
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">
-          {group?.id ? t('commandGroups.editGroup') : t('commandGroups.createGroup')}
-        </h3>
-        <form onSubmit={handleSubmit}>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">{t('commandGroups.name')}</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t('commandGroups.namePlaceholder')}
-              autoFocus
-              required
-            />
-          </div>
+    <>
+      <dialog
+        ref={dialogRef}
+        className="modal"
+        onCancel={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}
+      >
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">
+            {group?.id ? t('commandGroups.editGroup') : t('commandGroups.createGroup')}
+          </h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">{t('commandGroups.name')}</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={t('commandGroups.namePlaceholder')}
+                autoFocus
+                required
+              />
+            </div>
 
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">{t('commandGroups.parentGroup')}</span>
-            </label>
-            <select
-              className="select select-bordered w-full"
-              value={selectedParentId}
-              onChange={e => setSelectedParentId(e.target.value)}
-            >
-              <option value="">{t('commandGroups.noParent')}</option>
-              {availableParentGroups.map(g => (
-                <option key={g.id} value={g.id}>
-                  {getGroupPath(g.id)}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">{t('commandGroups.parentGroup')}</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={selectedParentId}
+                onChange={e => setSelectedParentId(e.target.value)}
+              >
+                <option value="">{t('commandGroups.noParent')}</option>
+                {availableParentGroups.map(g => (
+                  <option key={g.id} value={g.id}>
+                    {getGroupPath(g.id)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">{t('commandGroups.description')}</span>
-            </label>
-            <textarea
-              className="textarea textarea-bordered"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder={t('commandGroups.descriptionPlaceholder')}
-              rows={2}
-            />
-          </div>
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">{t('commandGroups.description')}</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder={t('commandGroups.descriptionPlaceholder')}
+                rows={2}
+              />
+            </div>
 
-          <div className="modal-action">
-            <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
-              {t('commandGroups.cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={!name.trim()}>
-              {t('commandGroups.save')}
-            </button>
-          </div>
+            <div className="modal-action">
+              <button type="button" className="btn btn-ghost" onClick={handleRequestClose}>
+                {t('commandGroups.cancel')}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={!name.trim()}>
+                {t('commandGroups.save')}
+              </button>
+            </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={(event) => {
+          event.preventDefault();
+          handleRequestClose();
+        }}>
+          <button type="button">close</button>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={handleCloseModal}>
-        <button type="button">close</button>
-      </form>
-    </dialog>
+      </dialog>
+      <UnsavedChangesConfirmModal
+        isOpen={confirmOpen}
+        onDiscard={() => {
+          setConfirmOpen(false);
+          handleCloseModal();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 };
 

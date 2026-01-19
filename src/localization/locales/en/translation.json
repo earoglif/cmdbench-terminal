@@ -154,6 +154,12 @@
     "execute": "Execute",
     "cancel": "Cancel"
   },
+  "unsavedChanges": {
+    "title": "Unsaved changes",
+    "message": "You have unsaved changes. Do you want to discard them and close?",
+    "stay": "Continue editing",
+    "discard": "Discard changes"
+  },
   "window": {
     "minimize": "Minimize",
     "maximize": "Maximize",
