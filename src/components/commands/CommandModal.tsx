@@ -319,7 +319,7 @@ export const CommandModal: React.FC<CommandModalProps> = ({
                       autoCorrect="off"
                     >
                       <Mention
-                        trigger="#"
+                        trigger={/(#([^\s#]*))$/}
                         markup="#[__display__](__id__)"
                         displayTransform={(_id, name) => `#${name}`}
                         data={fields
