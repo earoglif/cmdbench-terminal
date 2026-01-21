@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCommandGroupsStore, CommandGroup } from '@/stores/commandGroupsStore';
 import { useCommandsStore, Command, CreateCommandData } from '@/stores/commandsStore';
@@ -11,8 +11,8 @@ import {
 } from '@/components/commands';
 import { IoDocumentText, IoAdd, IoFolderOpen, IoSave } from 'react-icons/io5';
 import { validateExportData, createExportData } from '@/utils/dataValidation';
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 
 const CommandsSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -36,9 +36,6 @@ const CommandsSettings: React.FC = () => {
     exportData: exportCommands,
     importData: importCommands,
   } = useCommandsStore();
-
-  // File input ref for import
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Toast state for notifications
   const [toast, setToast] = useState<{
@@ -173,48 +170,39 @@ const CommandsSettings: React.FC = () => {
     }
   }, [exportCommands, exportGroups, t]);
 
-  const handleImportClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+  const handleImportClick = useCallback(async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        filters: [{
+          name: 'JSON',
+          extensions: ['json'],
+        }],
+      });
 
-  const handleImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const data = JSON.parse(text);
-        
-        if (!validateExportData(data)) {
-          setToast({ show: true, message: t('commands.importValidationError'), type: 'error' });
-          setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
-          return;
-        }
-        
-        importCommands(data.commands);
-        importGroups(data.groups);
-        
-        setToast({ show: true, message: t('commands.importSuccess'), type: 'success' });
-        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-      } catch (error) {
-        console.error('Import error:', error);
-        setToast({ show: true, message: t('commands.importFileError'), type: 'error' });
-        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+      if (!selected || typeof selected !== 'string') {
+        return;
       }
-    };
-    
-    reader.onerror = () => {
+
+      const text = await readTextFile(selected);
+      const data = JSON.parse(text);
+
+      if (!validateExportData(data)) {
+        setToast({ show: true, message: t('commands.importValidationError'), type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+        return;
+      }
+
+      importCommands(data.commands);
+      importGroups(data.groups);
+
+      setToast({ show: true, message: t('commands.importSuccess'), type: 'success' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+    } catch (error) {
+      console.error('Import error:', error);
       setToast({ show: true, message: t('commands.importFileError'), type: 'error' });
       setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
-    };
-    
-    reader.readAsText(file);
-    
-    // Reset input so the same file can be loaded again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   }, [importCommands, importGroups, t]);
 
@@ -229,34 +217,9 @@ const CommandsSettings: React.FC = () => {
         </div>
       )}
 
-      {/* Hidden file input for import */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleImport}
-        style={{ display: 'none' }}
-      />
-
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">{t('commands.title')}</h2>
         <div className="flex gap-2">
-          {/* <button
-            className="btn btn-outline btn-sm"
-            onClick={handleExport}
-            title={t('commands.exportData')}
-          >
-            <IoDownload className="w-4 h-4 mr-1" />
-            {t('commands.exportData')}
-          </button>
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={handleImportClick}
-            title={t('commands.importData')}
-          >
-            <IoCloudUpload className="w-4 h-4 mr-1" />
-            {t('commands.importData')}
-          </button> */}
           <button
             className="btn btn-outline btn-sm"
             onClick={() => handleAddCommand()}
@@ -276,8 +239,16 @@ const CommandsSettings: React.FC = () => {
               <IoSave className="w-4 h-4 mr-1" />
             </div>
             <ul className='menu dropdown-content bg-base-200 rounded-box w-52 p-2 mt-3 shadow z-10'>
-              <li><a onClick={handleExport}>{t('commands.exportData')}</a></li>
-              <li><a onClick={handleImportClick}>{t('commands.importData')}</a></li>
+              <li>
+                <button type="button" className="w-full text-left" onClick={handleExport}>
+                  {t('commands.exportData')}
+                </button>
+              </li>
+              <li>
+                <button type="button" className="w-full text-left" onClick={handleImportClick}>
+                  {t('commands.importData')}
+                </button>
+              </li>
             </ul>
           </div>
         </div>
