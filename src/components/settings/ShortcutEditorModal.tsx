@@ -49,13 +49,16 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
       if (shortcut) {
         const initialKeys = shortcut.keys;
         const initialCommandId = shortcut.commandId || '';
+        const resolvedCommandId = initialCommandId && commands.some((cmd) => cmd.id === initialCommandId)
+          ? initialCommandId
+          : '';
         const initialDescription = shortcut.description || '';
         setKeys(initialKeys);
-        setCommandId(initialCommandId);
+        setCommandId(resolvedCommandId);
         setDescription(initialDescription);
         initialDataRef.current = {
           keys: initialKeys,
-          commandId: initialCommandId,
+          commandId: resolvedCommandId,
           description: initialDescription,
         };
       } else {
@@ -77,6 +80,19 @@ const ShortcutEditorModal: React.FC<ShortcutEditorModalProps> = ({
       setEditorModalOpen(false);
     }
   }, [isOpen, shortcut, setEditorModalOpen]);
+
+  useEffect(() => {
+    if (!isOpen || shortcut?.isSystem) return;
+    if (commandId && !commands.some((cmd) => cmd.id === commandId)) {
+      if (initialDataRef.current?.commandId === commandId) {
+        initialDataRef.current = {
+          ...initialDataRef.current,
+          commandId: '',
+        };
+      }
+      setCommandId('');
+    }
+  }, [isOpen, commandId, commands, shortcut?.isSystem]);
 
   const normalizeKeys = (event: KeyboardEvent): string => {
     const parts: string[] = [];

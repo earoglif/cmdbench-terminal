@@ -1,6 +1,6 @@
 [package]
 name = "cmdbench-terminal"
-version = "0.1.0-alpha.38"
+version = "0.1.0-alpha.39"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
