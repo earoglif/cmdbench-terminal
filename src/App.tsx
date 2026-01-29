@@ -45,6 +45,16 @@ const App: React.FC = () => {
   useKeyboardShortcuts({ runCommand, onOpenDialog: handleOpenDialog });
 
   useEffect(() => {
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
+  useEffect(() => {
     i18n.changeLanguage(language);
   }, [language, i18n]);
 

@@ -16,6 +16,15 @@ html, body, #root {
   overflow: hidden;
 }
 
+* {
+  user-select: none;
+}
+
+.terminal-container,
+.terminal-container * {
+  user-select: text;
+}
+
 /* Стили для textarea без focus outline */
 .textarea-no-focus {
   @apply textarea textarea-bordered w-full;

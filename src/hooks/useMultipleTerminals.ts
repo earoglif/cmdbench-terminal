@@ -183,6 +183,31 @@ export const useMultipleTerminals = () => {
     
     containerRef.current.appendChild(container);
     terminal.open(container);
+
+    const handleContextMenu = async (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const selection = terminal.getSelection();
+      if (selection) {
+        try {
+          await navigator.clipboard.writeText(selection);
+        } catch (error) {
+          console.error("Error writing to clipboard:", error);
+        }
+        return;
+      }
+      try {
+        const clipboardText = await navigator.clipboard.readText();
+        if (clipboardText) {
+          terminal.focus();
+          terminal.paste(clipboardText);
+        }
+      } catch (error) {
+        console.error("Error reading from clipboard:", error);
+      }
+    };
+
+    container.addEventListener('contextmenu', handleContextMenu);
     
     // Получаем реальные размеры терминала через fit()
     fitAddon.fit();
