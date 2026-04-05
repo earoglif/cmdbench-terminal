@@ -76,6 +76,17 @@ const SortableTabItem: FC<SortableTabItemProps> = ({
     onDoubleClick(tab.id);
   };
 
+  const handleMouseDown = (e: MouseEvent) => {
+    if (e.button !== 1) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (tabsCount > 1) {
+      onRemove(tab.id);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -88,6 +99,7 @@ const SortableTabItem: FC<SortableTabItemProps> = ({
           : 'hover:bg-base-300'
       } ${isDragging ? 'z-50' : ''}`}
       onClick={(e) => onClick(e, tab.id)}
+      onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
       title={tab.title}
     >
